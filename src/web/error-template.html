@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bug-Hunter | Error Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Modern+Antiqua&family=Tilt+Prism&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            color: #edffce;
+            min-height: 100vh;
+            text-align: center;
+            text-wrap: balance;
+            font-family: 'Modern Antiqua', 'Segoe UI';
+            background: linear-gradient(140deg, #1b0032, #1d0025);
+        }
+
+        hr {
+            background: linear-gradient(#ffeabd11, #ffedbfee, #ffeabd11);
+            border-radius: 5px;
+            margin: 3px auto;
+            border: none;
+            height: 2px;
+            width: 80%;
+        }
+
+        .flex {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flex.cw { flex-direction: column; }
+
+        .head {
+            margin: 10px 8px;
+            font-size: 32px;
+            color: #adf5ff;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            font-family: 'Tilt Prism', system-ui, 'Segoe UI';
+        }
+        
+        .head > .sub {
+            font-size: 12px;
+            margin-top: -4px;
+            color: #b3f6ff55;
+            letter-spacing: -0.1px;
+            font-family: monospace;
+        }
+
+        .head > hr {
+            height: 2px;
+            border: none;
+            margin-top: 4px;
+            background: #badfff4b;
+        }
+
+        body > *:not(.head) {
+            margin-top: 10px;
+        }
+
+        body > div > .disp {
+            max-width: -moz-fit-content;
+            max-width: fit-content;
+            margin: auto;
+        }
+
+        .detail {
+            margin: 2px 5px;
+            min-width: 240px;
+            max-width: 720px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-family: monospace;
+            background: #0000005c;
+        }
+
+        .detail > * { width: 100%; justify-content: space-between; margin: 2px 0; }
+        .v { color: #b6ccffeb; font-size: 14px; }
+        .detail.code { text-align: left; }
+        .k { color: #b3ff00; }
+
+        .detail.code > .line {
+            width: 100%;
+            padding: 4px;
+            margin: 4px 0;
+            border-radius: 8px;
+            word-break: break-all;
+            justify-content: start;
+            background: #add5ff0f;
+        }
+
+        .detail.code > .line.bug {
+            background: #ff000015;
+            font-weight: bolder;
+            color: #ffb5e4;
+        }
+
+        .detail.code > .line .no {
+            font-size: 11px;
+            color: #626262;
+            margin-right: 10px;
+            word-break: keep-all;
+        }
+    </style>
+</head>
+<body class="flex cw">
+    <div class="head">
+        <div class="title">Bug Hunter</div>
+        <div class="sub">Bugs beware, Code's in care!</div><hr>
+    </div>
+    <div class="meta">
+        <div class="disp">We've Hunted A <b>BUG</b> For You<hr></div>
+        <div class="detail flex cw">
+            <div class="where flex"><b class="k">When ></b> <span class="v">{HUNT_TIME}</span></div>
+            <div class="ip flex"><b class="k">IP ></b> <span class="v">{MACHINE_IP}</span></div>
+            <div class="app flex"><b class="k">App ></b> <span class="v">{APP_NAME}</span></div>
+            <div class="status flex"><b class="k">Status ></b> <span class="v">{APP_STATUS}</span></div>
+        </div>
+    </div>
+    <div class="ermsg sep">
+        <div class="disp">Error Message<hr></div>
+        <div class="detail v">{ERROR_MSG}</div>
+    </div>
+    <div class="erstack">
+        <div class="disp">Traced Call Stack<hr></div>
+        <div class="detail stack v">
+            <!-- {STACK_TRACE} -->
+            ToDo: Implementaion Required
+        </div>
+    </div>
+    <div class="ercode">
+        <div class="disp">Errored Code Context<hr></div>
+        <div class="detail code v">
+            <!-- {CONTEXT_CODE} -->
+            <div class="line flex"><b class="no">240</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Let's trigger another error</div>
+            <div class="line flex bug"><b class="no">241</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(myObj.data.one);</div>
+            <div class="line flex"><b class="no">242</b>function fakeError() {</div>
+        </div>
+    </div>
+</body>
+</html>
