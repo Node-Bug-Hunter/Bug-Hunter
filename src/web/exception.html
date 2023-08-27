@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bug-Hunter | Issue Detected</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .body {
+            background: linear-gradient(140deg, #1b0032, #1d0025);
+            font-family: 'comic sans ms', 'Segoe UI';
+            background-repeat: no-repeat;
+            background-position: center;
+            text-align: center;
+            color: #edffce;
+            font-size: 18px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .body td > *:not(.head) { margin-top: 10px; }
+        .body td > div { margin-bottom: 15px; }
+
+        .table {
+            display: table;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        hr {
+            background: linear-gradient(#ffeabd56, #ffedbffc, #ffeabd4e);
+            border-radius: 5px;
+            margin: 3px auto;
+            border: none;
+            height: 3px;
+            width: 80%;
+        }
+
+        .body td > .head {
+            margin: 10px 8px;
+            margin-bottom: 20px;
+        }
+        
+        .body td > .head > .sub {
+            top: -6px;
+            font-size: 12px;
+            position: relative;
+            color: #b3f6ff9c;
+            letter-spacing: -0.1px;
+            font-family: monospace;
+        }
+
+        .body td > div > .disp {
+            max-width: -moz-fit-content;
+            max-width: fit-content;
+            margin: auto;
+        }
+
+        .detail {
+            margin: 2px 5px;
+            min-width: 260px;
+            max-width: 720px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-family: monospace;
+            background: #0000005c;
+        }
+
+        .spc .k { padding-right: 5px; text-align: left; margin-right: auto; }
+        .spc .v { padding-left: 5px; text-align: right; margin-left: auto; }
+        .detail > * { width: 100%; margin: 2px 0; }
+        .spc .k, .spc .v { display: table-cell; }
+        .k { color: #b3ff00 !important; }
+        .detail.code { text-align: left; }
+
+        .v, .k {
+            font-size: clamp(13.2px, 2.5vw, 16px);
+            width: -moz-fit-content;
+            width: fit-content;
+            color: #b6ccffeb;
+            font-size: 14px;
+            margin: auto;
+        }
+
+        .detail.stack > .stk,
+        .detail.code > .line {
+            width: 100%;
+            padding: 4px;
+            margin: 6px 0;
+            border-radius: 8px;
+            word-break: break-all;
+            background: #add5ff0f;
+        }
+
+        .detail.stack > .stk .func { color: #ffff7d; }
+        .detail.stack > .stk .file { color: #9df8ff; }
+        .detail.stack > .stk .place { color: #a8a8a8; }
+        .detail.stack > .stk { color: #ffbaba; padding: 4px 8px; }
+
+        .detail.code > .line.bug {
+            background: #ff000015;
+            font-weight: bolder;
+            color: #ffb5e4;
+        }
+
+        .detail.code > .line .no {
+            vertical-align: middle;
+            display: table-cell;
+            font-size: 11px;
+            height: 100%;
+            color: #626262;
+            padding-right: 10px;
+            word-break: keep-all;
+        }
+    </style>
+</head>
+<body>
+    <table class="body" bgcolor="#160023">
+        <tr><td>
+            <div class="head">
+                <img src="|LOGO_URL|" alt="BUG HUNTER">
+                <div class="sub">Bugs beware, Code's in care!</div>
+            </div>
+            <div class="meta">
+                <div class="disp">We've Hunted A <b>BUG</b> For You<hr></div>
+                <div class="detail table spc">
+                    <div class="where table"><b class="k">When ></b> <span class="v">|HUNT_TIME|</span></div>
+                    <div class="ip table"><b class="k">IP ></b> <span class="v">|MACHINE_IP|</span></div>
+                    <div class="app table"><b class="k">App ></b> <span class="v">|APP_NAME|</span></div>
+                    <div class="status table"><b class="k">Status ></b> <span class="v">|APP_STATUS|</span></div>
+                </div>
+            </div>
+            <div class="ermsg sep">
+                <div class="disp">Error Message<hr></div>
+                <div class="detail v"><i style="color: #5d5d5d;">&#x3C;:: Uncaught Error found ::&#x3E;</i><br>|ERROR_MSG|</div>
+            </div>
+            <div class="erstack">
+                <div class="disp">Traced Call Stack<hr></div>
+                <div class="detail stack v" style="--len: 10;">
+                    |STACK_TRACE|
+                </div>
+            </div>
+            <div class="ercode">
+                <div class="disp">Errored Code Context<hr></div>
+                <div class="detail code v">
+                    |CONTEXT_CODE|
+                </div>
+            </div>
+        </td></tr>
+    </table>
+</body>
+</html>
