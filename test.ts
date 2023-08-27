@@ -1,33 +1,46 @@
 import { HunterConfig } from "./src/types";
 import { Hunter } from "./src";
-import { encode } from "he";
 
 function triggerTest() {
-    console.log('Triggering Test in 2s....');
-    setTimeout(() => fakeError(), 2000);
+    console.log('Triggering custom error in four seconds....');
+    setTimeout(() => generateTestError(), 4000);
+
     const testConf: HunterConfig = {
         includeCodeContext: true,
         enableSourceMap: true,
         reportingType: 'email',
         appName: "Test-App",
         cwdFilter: true,
+        format: 'html',
         address: [
             {
                 name: "Rishabh Kumar",
                 email: "rishabh.kumar.pro@gmail.com"
+            },
+            {   // This is a test email
+                name: "John Doe",
+                email: "test_0860@email.com"
+            },
+            {   // This is a test email
+                name: "Person Tester",
+                email: "test_0860@outlook.com"
+            },
+            {   // This is a temporary test email
+                name: "Temporary Name",
+                email: "daknenulte@gufum.com"
             }
-        ],
-        format: 'html'
-    };
+        ]
+    }
 
-    let p = new Hunter(testConf);
-    p.startHunting();
+    let testHunter = new Hunter(testConf);
+    testHunter.startHunting();
 }
 
-function fakeError() {
-    throw new Error("Fake Error");
+function generateTestError() {
+    const testErrMsg = `Error occured due to testing: ${Date.now()}`;
+    throw new Error(testErrMsg); // Stimulate potential error
 }
 
 triggerTest();
-// console.log(encode("     Hello '<What's Up?>'").replace(/ /g, "&nbsp;"));
-// setTimeout(() => { }, 60 * 60 * 1000);
+// This  is    a spaced      comment
+// <This is demo evenly-spaced comment>

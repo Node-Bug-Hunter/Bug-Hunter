@@ -1,6 +1,7 @@
 import { createReadStream, existsSync } from "fs";
 import { createInterface } from "readline";
 import { Code, Stack } from "./types";
+import { encode } from "he";
 
 function parseStack(stackData: string, filter: boolean): Stack[] {
     const stackRegExp: RegExp = /at\s+(.*)\s+\((.*):(\d+):(\d+)\)/;
@@ -38,7 +39,7 @@ async function getCodeContext(fromStack: Stack): Promise<Code[]> {
     let end = fromStack.line + 5;
     let context: Code[] = [];
     let lineNo = 1;
-    let i = 0;
+    let i = start;
 
     const readableFS = createReadStream(fromStack.file);
     const reader = createInterface({
@@ -49,11 +50,12 @@ async function getCodeContext(fromStack: Stack): Promise<Code[]> {
     for await (const line of reader) {
         if (lineNo >= start && lineNo <= end) {
             const buggy = (lineNo === fromStack.line);
+            const htmlSafeLine = encode(line).replace(/ /g, "&nbsp;");
             
             const code: Code = {
+                code: htmlSafeLine,
                 isBuggy: buggy,
-                code: line,
-                lineNo: ++i
+                lineNo: i++
             }
 
             context.push(code);
