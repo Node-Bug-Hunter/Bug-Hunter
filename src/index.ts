@@ -1,5 +1,6 @@
 import { getCodeContext, parseStack } from "./utility";
-import { HunterConfig } from "./types";
+import { Code, ExceptionTemplate, HunterConfig, RequestData } from "./types";
+import { Sender } from "./sender";
 
 export class Hunter {
     config: HunterConfig;
@@ -24,12 +25,16 @@ export class Hunter {
 
     private async handleUncaughtException(err: Error) {
         const erStack = parseStack(err.stack, this.config.cwdFilter);
-        console.log(erStack, '\n\n');
+        const exepData = Sender.buildExepData(this.config, err.message, erStack,
+            this.config.includeCodeContext ? await getCodeContext(erStack[0]) : null);
 
-        if (this.config.includeCodeContext)
-            console.log(await getCodeContext(erStack[0]));
+        const rqData: RequestData = {
+            type: "exception",
+            format: "html",
+            data: exepData
+        }
 
-        console.log("QOE:", this.config.quitOnError);
+        Sender.sendHuntedData(rqData);
         if (this.config.quitOnError) process.exit(1);
     }
 
@@ -44,6 +49,7 @@ function getDefaultConfig(): HunterConfig {
         logDir: "./hunted-logs/",
         enableSourceMap: false,
         reportingType: 'log',
+        appName: "Default",
         logType: "json",
         maxFileSize: 5
     };

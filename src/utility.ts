@@ -1,11 +1,11 @@
 import { createReadStream, existsSync } from "fs";
 import { createInterface } from "readline";
-import { TrackedStack } from "./types";
+import { Code, Stack } from "./types";
 
-function parseStack(stackData: string, filter: boolean): TrackedStack[] {
+function parseStack(stackData: string, filter: boolean): Stack[] {
     const stackRegExp: RegExp = /at\s+(.*)\s+\((.*):(\d+):(\d+)\)/;
     const stackArray = stackData.split('\n').slice(1);
-    const goodStack: TrackedStack[] = [];
+    const goodStack: Stack[] = [];
 
     for (let i = 0; i < stackArray.length; i++) {
         const stackMatches = stackArray[i].match(stackRegExp);
@@ -18,7 +18,7 @@ function parseStack(stackData: string, filter: boolean): TrackedStack[] {
                 nm = "." + nm.replace(cwd, "");
             }
 
-            const stackInfo: TrackedStack = {
+            const stackInfo: Stack = {
                 column: parseInt(cn),
                 line: parseInt(ln),
                 function: fn,
@@ -32,13 +32,12 @@ function parseStack(stackData: string, filter: boolean): TrackedStack[] {
     return goodStack.filter(s => s !== null);
 }
 
-async function getCodeContext(fromStack: TrackedStack): Promise<[number, string[]]> {
+async function getCodeContext(fromStack: Stack): Promise<Code[]> {
     if (!existsSync(fromStack.file) || !fromStack) return null;
     let start = fromStack.line - 5;
     let end = fromStack.line + 5;
-    let context = [];
+    let context: Code[] = [];
     let lineNo = 1;
-    let where = 0;
     let i = 0;
 
     const readableFS = createReadStream(fromStack.file);
@@ -49,24 +48,25 @@ async function getCodeContext(fromStack: TrackedStack): Promise<[number, string[
 
     for await (const line of reader) {
         if (lineNo >= start && lineNo <= end) {
-            if (lineNo === fromStack.line) where = i;
-            context.push(line);
-            i++;
+            const buggy = (lineNo === fromStack.line);
+            
+            const code: Code = {
+                isBuggy: buggy,
+                code: line,
+                lineNo: ++i
+            }
+
+            context.push(code);
         }
 
         if (++lineNo > end) break;
     }
 
     reader.close();
-    return [where, context];
-}
-
-async function getMachineIP(): Promise<string> {
-    return "0.0.0.0";
+    return context;
 }
 
 export {
     getCodeContext,
-    getMachineIP,
     parseStack
 };

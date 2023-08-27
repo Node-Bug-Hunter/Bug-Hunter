@@ -1,9 +1,13 @@
 {
-    "exception": {
-        "placeholders": ["|LOGO_URL|", "|HUNT_TIME|", "|MACHINE_IP|", "|APP_NAME|", "|APP_STATUS|", "|ERROR_MSG|", "|STACK_TRACE|", "|CONTEXT_CODE|", "|FUNCTION_NAME|", "|FILE_PATH|", "|ER_LINE|", "|ER_COLOUMN|", "|TYPE|", "|LINE_NO|", "|CODE_LINE|"],
-        "stack": "<div class=\"stk\">at: '<b class=\"func\">|FUNCTION_NAME|</b>' [<b class=\"file\">|FILE_PATH|</b>] {<b class=\"place\">line: |ER_LINE|, column: |ER_COLOUMN|</b>}</div>",
-        "code": "<div class=\"line table |TYPE|\"><b class=\"no\">|LINE_NO|</b>|CODE_LINE|</div>"
-    },
-    "rejection": {
+    "exception": "exception.html",
+    "rejection": "rejection.html",
+    "logo": "logo.png",
+
+    "subTemplate": {
+        "exception": {
+            "placeholders": ["|LOGO_URL|", "|HUNT_TIME|", "|MACHINE_IP|", "|APP_NAME|", "|APP_STATUS|", "|ERROR_MSG|", "|STACK_TRACE|", "|CONTEXT_CODE|", "|FUNCTION_NAME|", "|FILE_PATH|", "|ER_LINE|", "|ER_COLOUMN|", "|TYPE|", "|LINE_NO|", "|CODE_LINE|"],
+            "stack": "<div class=\"stk\">at: '<b class=\"func\">|FUNCTION_NAME|</b>' [<b class=\"file\">|FILE_PATH|</b>] {<b class=\"place\">line: |ER_LINE|, column: |ER_COLOUMN|</b>}</div>",
+            "code": "<div class=\"line table |TYPE|\"><b class=\"no\">|LINE_NO|</b>|CODE_LINE|</div>"
+        }
     }
 }
