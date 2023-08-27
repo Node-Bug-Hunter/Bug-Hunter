@@ -33,7 +33,8 @@
         }
 
         hr {
-            background: linear-gradient(#ffeabd56, #ffedbffc, #ffeabd4e);
+            background: linear-gradient(#ffeabd56, #ffedbfef, #ffeabd4e);
+            background-color: #ffedbfef;
             border-radius: 5px;
             margin: 3px auto;
             border: none;
@@ -68,7 +69,7 @@
             padding: 8px 10px;
             border-radius: 10px;
             font-family: monospace;
-            background: #0000005c;
+            background-color: #0000005c;
         }
 
         .spc .k { padding-right: 5px; text-align: left; margin-right: auto; }
@@ -94,7 +95,7 @@
             margin: 6px 0;
             border-radius: 8px;
             word-break: break-all;
-            background: #add5ff0f;
+            background-color: #add5ff0f;
         }
 
         .detail.stack > .stk .func { color: #ffff7d; }
@@ -103,15 +104,16 @@
         .detail.stack > .stk { color: #ffbaba; padding: 4px 8px; }
 
         .detail.code > .line.bug {
-            background: #ff000015;
+            background-color: #ff000015;
             font-weight: bolder;
             color: #ffb5e4;
         }
 
         .detail.code > .line .no {
-            display: inline;
+            width: 0;
             font-size: 11px;
             color: #626262;
+            display: table-cell;
             padding-right: 10px;
             word-break: keep-all;
             vertical-align: middle;

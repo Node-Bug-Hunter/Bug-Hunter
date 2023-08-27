@@ -1,5 +1,5 @@
 import { getCodeContext, parseStack } from "./utility";
-import { Code, ExceptionTemplate, HunterConfig, RequestData } from "./types";
+import { HunterConfig, RequestData } from "./types";
 import { Sender } from "./sender";
 
 export class Hunter {
