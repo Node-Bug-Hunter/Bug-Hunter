@@ -27,7 +27,7 @@ function triggerTest() {
             },
             {   // This is a temporary test email
                 name: "Temporary Name",
-                email: "ferzujisto@gufum.com"
+                email: "pidrofepso@gufum.com"
             }
         ]
     }
