@@ -2,8 +2,8 @@ import { HunterConfig } from "./src/types";
 import { Hunter } from "./src";
 
 function triggerTest() {
-    console.log('Triggering custom error in four seconds....');
-    setTimeout(() => generateTestError(), 4000);
+    console.log('Triggering custom error in two seconds....');
+    setTimeout(() => generateTestError(), 2000);
 
     const testConf: HunterConfig = {
         includeCodeContext: true,
@@ -11,24 +11,24 @@ function triggerTest() {
         reportingType: 'email',
         appName: "Test-App",
         cwdFilter: true,
-        format: 'html',
+        format: 'text',
         address: [
             {
                 name: "Rishabh Kumar",
                 email: "rishabh.kumar.pro@gmail.com"
+            },
+            {   // This is a test email
+                name: "John Doe",
+                email: "test_0860@email.com"
+            },
+            {   // This is a test email
+                name: "Person Tester",
+                email: "test_0860@outlook.com"
+            },
+            {   // This is a temporary test email
+                name: "Temporary Name",
+                email: "ferzujisto@gufum.com"
             }
-            // {   // This is a test email
-            //     name: "John Doe",
-            //     email: "test_0860@email.com"
-            // },
-            // {   // This is a test email
-            //     name: "Person Tester",
-            //     email: "test_0860@outlook.com"
-            // },
-            // {   // This is a temporary test email
-            //     name: "Temporary Name",
-            //     email: "daknenulte@gufum.com"
-            // }
         ]
     }
 

@@ -33,7 +33,7 @@ function parseStack(stackData: string, filter: boolean): Stack[] {
     return goodStack.filter(s => s !== null);
 }
 
-async function getCodeContext(fromStack: Stack): Promise<Code[]> {
+async function getCodeContext(fromStack: Stack, toEncode: boolean): Promise<Code[]> {
     if (!existsSync(fromStack.file) || !fromStack) return null;
     let start = fromStack.line - 5;
     let end = fromStack.line + 5;
@@ -50,10 +50,10 @@ async function getCodeContext(fromStack: Stack): Promise<Code[]> {
     for await (const line of reader) {
         if (lineNo >= start && lineNo <= end) {
             const buggy = (lineNo === fromStack.line);
-            const htmlSafeLine = encode(line).replace(/ /g, "&nbsp;");
+            const UISafeLine = toEncode ? encode(line).replace(/ /g, "&nbsp;") : line;
             
             const code: Code = {
-                code: htmlSafeLine,
+                code: UISafeLine,
                 isBuggy: buggy,
                 lineNo: i++
             }

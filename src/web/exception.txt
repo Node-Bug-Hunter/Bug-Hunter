@@ -1,27 +1,25 @@
-BUG HUNTER
-Bugs beware, Code's in care!
+⚡━━━━━━━━━━━━━━━━━━━━━⚡
+    🐞  BUG HUNTER  🐞 
+    Bugs beware, Code's 
+          in care!      
+⚡━━━━━━━━━━━━━━━━━━━━━⚡
 
+🔍 We've Hunted A BUG For You 🔍
+-----------------------------------
+⏰ When > |HUNT_TIME|
+💻 IP > |MACHINE_IP|
+📦 App > |APP_NAME|
+🚦 Status > |APP_STATUS|
 
-------------------------------
-| We've Hunted A BUG For You |
-------------------------------
-When > |HUNT_TIME|
-IP > |MACHINE_IP|
-App > |APP_NAME|
-Status > |APP_STATUS|
-
------------------
-| Error Message |
------------------
-<:: Uncaught Error found ::>
+🔥 Error Message 🔥
+-----------------------
+🚫 Uncaught Error found 🚫
 |ERROR_MSG|
 
----------------------
-| Traced Call Stack |
----------------------
+🔗 Traced Call Stack 🔗
+---------------------------
 |STACK_TRACE|
 
-------------------------
-| Errored Code Context |
-------------------------
+📝 Errored Code Context 📝
+-----------------------------
 |CONTEXT_CODE|

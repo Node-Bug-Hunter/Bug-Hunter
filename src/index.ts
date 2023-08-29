@@ -26,7 +26,8 @@ export class Hunter {
     private async handleUncaughtException(err: Error) {
         const erStack = parseStack(err.stack, this.config.cwdFilter);
         const exepData = Worker.buildExepData(this.config, err.message, erStack,
-            this.config.includeCodeContext ? await getCodeContext(erStack[0]) : null);
+            this.config.includeCodeContext ? await getCodeContext(erStack[0],
+                this.config.reportingType !== 'email') : null);
         exepData.status = this.config.quitOnError ? "Ended" : "Running";
 
         if (this.config.reportingType === 'email') {
