@@ -24,6 +24,7 @@ export class Hunter {
     }
 
     private async handleUncaughtException(err: Error) {
+        console.log('[Error-Detected]: Trying to report it...');
         const erStack = parseStack(err.stack, this.config.cwdFilter);
         const exepData = Worker.buildExepData(this.config, err.message, erStack,
             this.config.includeCodeContext ? await getCodeContext(erStack[0],

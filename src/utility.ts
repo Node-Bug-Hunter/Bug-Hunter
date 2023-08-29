@@ -10,8 +10,11 @@ function parseStack(stackData: string, filter: boolean): Stack[] {
 
     for (let i = 0; i < stackArray.length; i++) {
         const stackMatches = stackArray[i].match(stackRegExp);
-        if (stackMatches && stackMatches.length === 5) {
+
+        if (stackMatches && stackMatches.length > 4) {
             let [_, fn, nm, ln, cn] = stackMatches;
+            nm = nm.replace(/^file:\/\/\//, "")
+                .replace(/\//g, "\\");
 
             if (filter) {
                 const cwd = process.cwd();

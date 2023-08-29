@@ -1,12 +1,16 @@
 {
 	"name": "bug-hunter",
-	"version": "0.1.1",
+	"version": "0.2.1",
 	"main": "index.js",
 	"private": false,
 	"description": "Simple yet powerful bugs & error reporting service for node applications",
 	"author": {
 		"name": "Rishabh Kumar",
 		"email": "rishabh.kumar.pro@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Techzy-Programmer/Bug-Hunter.git"
 	},
 	"keywords": [
 		"bug",
