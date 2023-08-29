@@ -1,0 +1,27 @@
+BUG HUNTER
+Bugs beware, Code's in care!
+
+
+------------------------------
+| We've Hunted A BUG For You |
+------------------------------
+When > |HUNT_TIME|
+IP > |MACHINE_IP|
+App > |APP_NAME|
+Status > |APP_STATUS|
+
+-----------------
+| Error Message |
+-----------------
+<:: Uncaught Error found ::>
+|ERROR_MSG|
+
+---------------------
+| Traced Call Stack |
+---------------------
+|STACK_TRACE|
+
+------------------------
+| Errored Code Context |
+------------------------
+|CONTEXT_CODE|

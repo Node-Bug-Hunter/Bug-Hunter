@@ -1,7 +1,7 @@
 import { Code, ExceptionTemplate, HunterConfig, RequestData, Stack } from "./types";
 import axios from 'axios';
 
-export class Sender {
+export class Worker {
     static buildExepData(cnf: HunterConfig, erMsg: string, stacks: Stack[], codes: Code[]): ExceptionTemplate {
         if (cnf.reportingType === 'log') return;
         let reqData: ExceptionTemplate = {
@@ -25,16 +25,12 @@ export class Sender {
         try {
             const SERVER_URL = 'https://hunter-server.040203.xyz';
             const response = await axios.post(SERVER_URL, data);
-
-            // Logging response data from server
-            console.log("Send Response: ", response.data, '\n\n');
-
-            if (response.status === 200) {
-                console.log("New issue reported successfully!");
-                return;
-            }
+            console.log("Response: ", response.data);
+            return;
         }
-        catch (e) { console.log(e?.response?.data); }
-        console.error('Failed to report');
+        catch (e) {
+            console.log("Something went wrong!",
+                e?.response?.data);
+        }
     }
 }

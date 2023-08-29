@@ -16,19 +16,19 @@ function triggerTest() {
             {
                 name: "Rishabh Kumar",
                 email: "rishabh.kumar.pro@gmail.com"
-            },
-            {   // This is a test email
-                name: "John Doe",
-                email: "test_0860@email.com"
-            },
-            {   // This is a test email
-                name: "Person Tester",
-                email: "test_0860@outlook.com"
-            },
-            {   // This is a temporary test email
-                name: "Temporary Name",
-                email: "daknenulte@gufum.com"
             }
+            // {   // This is a test email
+            //     name: "John Doe",
+            //     email: "test_0860@email.com"
+            // },
+            // {   // This is a test email
+            //     name: "Person Tester",
+            //     email: "test_0860@outlook.com"
+            // },
+            // {   // This is a temporary test email
+            //     name: "Temporary Name",
+            //     email: "daknenulte@gufum.com"
+            // }
         ]
     }
 

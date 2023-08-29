@@ -1,6 +1,6 @@
 import { getCodeContext, parseStack } from "./utility";
 import { HunterConfig, RequestData } from "./types";
-import { Sender } from "./sender";
+import { Worker } from "./sender";
 
 export class Hunter {
     config: HunterConfig;
@@ -25,16 +25,23 @@ export class Hunter {
 
     private async handleUncaughtException(err: Error) {
         const erStack = parseStack(err.stack, this.config.cwdFilter);
-        const exepData = Sender.buildExepData(this.config, err.message, erStack,
+        const exepData = Worker.buildExepData(this.config, err.message, erStack,
             this.config.includeCodeContext ? await getCodeContext(erStack[0]) : null);
+        exepData.status = this.config.quitOnError ? "Ended" : "Running";
 
-        const rqData: RequestData = {
-            type: "exception",
-            format: "html",
-            data: exepData
+        if (this.config.reportingType === 'email') {
+            const rqData: RequestData = {
+                format: this.config.format,
+                type: "exception",
+                data: exepData
+            }
+
+            Worker.sendHuntedData(rqData);
+        }
+        else {
+            // ToDo: Implement logging functionality
         }
 
-        Sender.sendHuntedData(rqData);
         if (this.config.quitOnError) process.exit(1);
     }
 

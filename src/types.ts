@@ -5,7 +5,7 @@ type MaxAddress = [Address, Address?, Address?, Address?, Address?];
 
 type HunterEmailConfig = {
     antiPhishingPhrase?: string
-    format: "html" | "plain"
+    format: "html" | "text"
     reportingType: "email"
     address: MaxAddress
 }
@@ -61,7 +61,7 @@ export type RejectionTemplate = {
 // #endregion
 
 export type RequestData = {
-	format: "html" | "plain"
+	format: "html" | "text"
 } & ({
 	type: "exception"
 	data: ExceptionTemplate
