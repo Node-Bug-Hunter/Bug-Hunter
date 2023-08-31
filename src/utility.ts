@@ -3,7 +3,13 @@ import { createInterface } from "readline";
 import { Code, Stack } from "./types";
 import { encode } from "he";
 
-function parseStack(stackData: string, filter: boolean): Stack[] {
+/**
+ * Parses the stack trace data to extract relevant information such as the function name, file name, line number, and column number.
+ * @param stackData - The stack trace data to be parsed.
+ * @param filter - An optional flag indicating whether to filter out stack trace entries that do not start with the current working directory.
+ * @returns An array of `Stack` objects containing the extracted information from the stack trace data.
+*/
+function parseStack(stackData: string, filter?: boolean): Stack[] {
     const stackRegExp: RegExp = /at\s+(.*)\s+\((.*):(\d+):(\d+)\)/;
     const stackArray = stackData.split('\n').slice(1);
     const goodStack: Stack[] = [];
@@ -36,6 +42,12 @@ function parseStack(stackData: string, filter: boolean): Stack[] {
     return goodStack.filter(s => s !== null);
 }
 
+/**
+ * Retrieves a context of code lines surrounding a specific line in a file.
+ * @param fromStack - The stack object containing information about the line to retrieve the code context for.
+ * @param toEncode - A flag indicating whether to encode the code lines for UI/UX safety.
+ * @returns An array of `Code` objects representing the code context. Each object contains the code line, line number, and a flag indicating if it is the line which caused error.
+*/
 async function getCodeContext(fromStack: Stack, toEncode: boolean): Promise<Code[]> {
     if (!existsSync(fromStack.file) || !fromStack) return null;
     let start = fromStack.line - 5;

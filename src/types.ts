@@ -17,6 +17,9 @@ type HunterLogConfig = {
     logDir: string
 }
 
+/**
+ * Represents the configuration options for a hunter, which can be used for reporting either via email or log. 
+*/
 export type HunterConfig = {
     reportingType: "email" | "log"
     includeCodeContext: boolean
@@ -43,6 +46,9 @@ export type Code = {
 	code: string
 }
 
+/**
+ * Represents an exception template.
+*/
 export type ExceptionTemplate = {
 	phishingPhrase?: string
 	errorMessage: string
@@ -60,6 +66,10 @@ export type RejectionTemplate = {
 
 // #endregion
 
+
+/**
+ * Represents outgoing request data to the hunter-server
+ */
 export type RequestData = {
 	format: "html" | "text"
 } & ({
