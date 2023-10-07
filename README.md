@@ -4,15 +4,14 @@
 
 Bug Hunter is a robust error reporting solution tailored for Node.js applications. It seamlessly captures uncaught exceptions and unhandled rejections, providing in-depth insights through detailed error stacks and contextual code snippets. With configurable reporting options, including email and logging, Bug Hunter ensures effective monitoring and prompt debugging for enhanced application stability.
 
-> :warning: **Warning** Reporting via logging is not yet implemented.
-
 ## Table Of Contents
 - [Features](#features)
 - [ToDo](#todo)
 - [Comparison with pm2](#bug-hunter-vs-pm2-plus-monitoring-service)
 - [Installation](#installation)
 - [Usage And Examples](#usage-and-examples)
-  - [HunterConfig Reference](#hunterconfig-reference)
+  - [`HunterConfig` Reference](#hunterconfig-reference)
+  - [`HunterLogConfig` Reference](#hunterlogconfig-reference)
 - [About Project Backend](#about-project-backend)
 - [License](#license)
 - [Contributing](#contributing)
@@ -21,16 +20,18 @@ Bug Hunter is a robust error reporting solution tailored for Node.js application
 ## Features
 
 1. **Realtime Error Tracking**: Uses `process` object to listen for any uncaught or rejected promise exceptions in realtime.
-2. **Automatic Bug Reporting**: Quickly reports issue to application owner via *Email* or *Log*.
+2. **Automatic Bug Reporting**: Quickly reports issue to application owner via *Email* and *Log* (optional).
 3. **Flexible Configuration**: Customize the error reporting behavior with configurable `HunterConfig` options.
 4. **Detailed Context**: Provides detailed *stack-trace* and *code-context* to help you quickly understand and debug issues.
-5. **Very Simple Integration**: Just 5 to 6 lines of code and you're ready to hunt all your application bugs.
+5. **Very Simple Integration**: Just 8 to 10 lines of code and you're ready to hunt all your application bugs.
 
 ## ToDo
 
 - [x] ~Add HTML/Text type email sending logic with templates.~
-- [ ] Add feature to implement logging functionality.
-- [ ] Implement Realtime monitoring dashboard.
+- [x] ~Add feature to implement logging functionality.~
+- [ ] Implement user based cloud authorization
+- [ ] Add feature for magic-link email verification
+- [ ] Integrate Realtime monitoring dashboard.
 
 ## Bug Hunter VS pm2 Plus Monitoring Service
 
@@ -54,15 +55,18 @@ Install the package using npm:
 ```bash
 npm i bug-hunter
 ```
+
 ## Usage And Examples
 
-Import the `Hunter` class from 'bug-hunter' module, then create instance of `Hunter` class by passing [`HunterConfig`](#hunterconfig-reference) as optional config object and start the error hunting job as shown in the example below
+Begin by importing the `Hunter` class from the 'bug-hunter' module. Then, proceed to instantiate the `Hunter` class, optionally providing an object of type [`HunterConfig`](#hunterconfig-reference) to the constructor. You can initiate error hunting process as demonstrated in the example below.
+
+Furthermore, if you wish to enable local logging functionality, you have the option of passing an object of type [`HunterLogConfig`](#hunterlogconfig-reference) to the `setLogging` method of the `Hunter` instance object, as illustrated in the following example.
 
 ```javascript
 import { Hunter } from 'bug-hunter'; // for ModuleJS configuaration
 
 // Refer below this code snippet for more details on `HunterConfig`
-let hunterConfig = {
+const hunterConfig = {
     includeCodeContext: true,
     reportingType: "email",
     quitOnError: false,
@@ -70,8 +74,17 @@ let hunterConfig = {
     // more....
 }
 
+// Refer to `HunterLogConfig` section for more details
+const logConfig = {
+    logDir: "./data/my-logs",
+    maxFileSizeMB: 5,
+    logType: "text",
+}
+
 const hunter = new Hunter(hunterConfig);
-hunter.startHunting();
+// By default logging is disabled you need to enable it explicitly
+hunter.setLogging(true, logConfig);
+hunter.startHunting(); // Start shooting bugs....
 
 // Your program code goes here which can potentially throw unhandled errors....
 let buggyObject = {
@@ -80,6 +93,9 @@ let buggyObject = {
 
 buggyObject.name(); // <== Oops! error occured (buggyObject.name is not a function)
 // But don't worry `Hunter` will immediately catch & notify you of this error in realtime
+
+// If you ever need to stop logging
+hunter.setLogging(false); // This is enough
 
 // If you no longer want to listen for errors anymore
 hunter.stopHunting(); // Just call this
@@ -90,67 +106,58 @@ You can use this module in CommonJS configuarations also like this
 ```javascript
 const { Hunter } = require("bug-hunter");
 const hunter = new Hunter();
-// Rest code same as shown in above example
+// Rest of code is same as shown in the above example
 ```
 
 #### HunterConfig Reference
 
-> Base properties for `HunterConfig`
-
-| Property           | Type                    | Required | Default       | Description                             |
-|--------------------|-------------------------|----------|---------------|-----------------------------------------|
-| reportingType      | "email" or "log"        | ✔️       | "log"         | Type of error reporting: email or log   |
-| includeCodeContext | boolean                 | ❌       | false         | Include code context in error reports   |
-| enableSourceMap    | boolean                 | ❌       | false         | Enable source map for code context      |
-| quitOnError        | boolean                 | ❌       | false         | Quit application on error               |
-| cwdFilter          | boolean                 | ❌       | false         | Filter out stack entries outside CWD    |
-| appName            | string                  | ✔️       | "Default"     | Name of the application                 |
-
-> For `reportingType` as `"email"` then following properties must be used @`HunterEmailConfig`
-
-| Property          | Type                         | Required | Default | Description                        |
-|-------------------|------------------------------|----------|---------|------------------------------------|
-| antiPhishingPhrase| string                       | ❌       | -       | Anti-phishing phrase for emails    |
-| format            | "html" or "text"             | ✔️       | -       | Format of email you want           |
-| reportingType     | "email"                      | ✔️       | -       | Always 'email' for this config     |
-| address           | [{name: "", email: ""}, ...] | ✔️       | -       | Array of email addresses with name |
-
-> For `reportingType` as `"log"` then following properties must be used @`HunterLogConfig`
-
-| Property       | Type              | Required | Default | Description                          |
-|----------------|-------------------|----------|---------|--------------------------------------|
-| logType        | "json" or "text"  | ✔️       | -       | Log type: JSON or text              |
-| reportingType  | "log"             | ✔️       | -       | Always 'log' for this config        |
-| maxFileSize    | number            | ✔️       | -       | Maximum log file size in megabytes  |
-| logDir         | string            | ✔️       | -       | Directory for log files             |
+| Property           | Type                                 | Required | Default   | Description                           |
+|--------------------|--------------------------------------|----------|-----------|---------------------------------------|
+| antiPhishingPhrase | string                               | ❌       | -         | Anti-phishing phrase for emails       |
+| includeCodeContext | boolean                              | ❌       | true      | Include code context in error reports |
+| enableSourceMap    | boolean                              | ❌       | false     | Enable source map for code context    |
+| quitOnError        | boolean                              | ❌       | false     | Quit application on error             |
+| cwdFilter          | boolean                              | ❌       | false     | Filter out stack entries outside CWD  |
+| appName            | string                               | ✔️       | -         | Name of the application               |
+| format             | "html" or "text"                     | ❌       | "html"    | Format of email you want              |
+| address            | [{name: string, email: string}, ...] | ✔️       | -         | Array of email addresses with name    |
 
 > Refer [types.ts](src/types.ts) for `HunterConfig` implementation
 
-> Quick example on above demonstration
+> Quick example on above reference
 
-```typescript
-// Use this config for email reporting
-const emailConfig = {
-    format: 'html',
-    reportingType: 'email',
+```javascript
+const config = {
     includeCodeContext: true,
     appName: '<Your App Name>',
     antiPhishingPhrase: 'Safety@1234',
-    address: [
+    address: [ // List should contain at least one entry and at most five
         { name: 'John Doe', email: 'john@example.com' },
         { name: 'Jane Smith', email: 'jane@example.com' }
     ]
 };
+```
 
-// Use this config for log reporting
+#### HunterLogConfig Reference
+
+| Property      | Type             | Required | Default | Description                                      |
+|---------------|------------------|----------|---------|--------------------------------------------------|
+| logDir        | string           | ✔️       | -      | Path where logs should be saved                   |
+| maxFileSizeMB | number           | ❌       | 10     | Maximum size for a single log file                |
+| logType       | "text" or "json" | ❌       | "text" | Format of log 'human-readable' or 'structured'    |
+
+> Refer [types.ts](src/types.ts) for `HunterLogConfig` implementation
+
+> Quick example on above reference
+
+```javascript
 const logConfig = {
-    includeCodeContext: true,
-    reportingType: 'log',
-    appName: 'MyApp',
-    logType: 'json',
-    maxFileSize: 10,
-    logDir: './logs/'
+    logDir: "./data/logs", // Directory will be created if doesn't exists
+    maxFileSizeMB: 5,
+    logType: "json"
 };
+
+hunter.setLogging(true, logConfig);
 ```
 
 ## About Project Backend
@@ -183,4 +190,4 @@ If you encounter any issues with the project or have suggestions for improvement
 
 - Rishabh Kumar
 - [LinkedIn Profile](https://www.linkedin.com/in/rishabh-kumar-438751207)
-- [Contact via Email](mailto:rishabh.kumar.pro@gmail.com)
+- [Contact via Email](mailto:admin@040203.xyz)

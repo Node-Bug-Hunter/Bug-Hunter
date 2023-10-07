@@ -1,7 +1,7 @@
 import { Code, ExceptionTemplate, HunterConfig, RequestData, Stack } from "./types";
 import axios from 'axios';
 
-export class Worker {
+export class Agent {
     /**
      * Constructs an ExceptionTemplate object based on the provided inputs.
      * 
@@ -12,8 +12,6 @@ export class Worker {
      * @returns An ExceptionTemplate object that represents the exception data.
     */
     static buildExepData(cnf: HunterConfig, erMsg: string, stacks: Stack[], codes: Code[]): ExceptionTemplate {
-        if (cnf.reportingType === 'log') return;
-    
         let reqData: ExceptionTemplate = {
             phishingPhrase: cnf.antiPhishingPhrase,
             hasCode: cnf.includeCodeContext,
@@ -25,10 +23,10 @@ export class Worker {
         }
 
         if (reqData.hasCode)
-            reqData.code = codes
+            reqData.code = codes;
         return reqData;
     }
-    
+
     /**
      * Sends the provided `RequestData` object to the server using the axios library.
      * Handles both successful and failed requests and logs the response or error message accordingly.

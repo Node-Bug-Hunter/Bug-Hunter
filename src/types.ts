@@ -5,29 +5,32 @@ type MaxAddress = [Address, Address?, Address?, Address?, Address?];
 
 type HunterEmailConfig = {
     antiPhishingPhrase?: string
-    format: "html" | "text"
-    reportingType: "email"
+    format?: "html" | "text"
     address: MaxAddress
 }
 
-type HunterLogConfig = {
-    logType: "json" | "text"
-    reportingType: "log"
-    maxFileSize: number
+/**
+ * Represents the config options to enable logging
+ * @property `logType` - "json": use when structured logs are needed; "text": use when human-readable format is required
+ * @property `logDir` - Directory where logs would be saved (directory will be created if doesn't exists)
+ * @property `maxFileSize` - Maximum size of a single log file (in Mega-Bytes)
+*/
+export type HunterLogConfig = {
+    logType?: "json" | "text"
+    maxFileSizeMB?: number
     logDir: string
 }
 
 /**
- * Represents the configuration options for a hunter, which can be used for reporting either via email or log. 
+ * Represents the configuration options for a hunter, which can be used for reporting either via email or log.
 */
 export type HunterConfig = {
-    reportingType: "email" | "log"
-    includeCodeContext: boolean
+    includeCodeContext?: boolean
     enableSourceMap?: boolean
     quitOnError?: boolean
     cwdFilter?: boolean
     appName: string
-} & (HunterEmailConfig | HunterLogConfig)
+} & HunterEmailConfig
 
 // #endregion
 
@@ -47,7 +50,7 @@ export type Code = {
 }
 
 /**
- * Represents an exception template.
+ * Represents an exception or rejection template.
 */
 export type ExceptionTemplate = {
 	phishingPhrase?: string
@@ -66,10 +69,9 @@ export type RejectionTemplate = {
 
 // #endregion
 
-
 /**
  * Represents outgoing request data to the hunter-server
- */
+*/
 export type RequestData = {
 	format: "html" | "text"
 } & ({
@@ -79,3 +81,11 @@ export type RequestData = {
 	type: "rejection"
 	data: RejectionTemplate
 })
+
+/**
+ * Represents loggable data
+*/
+export type LoggableData = Omit<ExceptionTemplate,
+	"phishingPhrase" | "address" | "app"> & {
+	config: HunterLogConfig
+}

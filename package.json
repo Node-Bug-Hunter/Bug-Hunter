@@ -1,7 +1,7 @@
 {
 	"license": "MIT",
 	"private": false,
-	"version": "0.3.3",
+	"version": "0.4.0",
 	"name": "bug-hunter",
 	"main": "./out/index.js",
 	"types": "./out/index.d.ts",
@@ -30,8 +30,7 @@
 	},
 	"files": [
 		"out/*.js",
-		"out/*.d.ts",
-		"README.md"
+		"out/*.d.ts"
 	],
 	"devDependencies": {
 		"@types/he": "^1.2.0",

@@ -83,7 +83,21 @@ async function getCodeContext(fromStack: Stack, toEncode: boolean): Promise<Code
     return context;
 }
 
+function getDateTimeInIST(): string {
+    return (new Date()).toLocaleString('en-US', {
+        timeZone: 'Asia/Kolkata',
+        second: 'numeric',
+        minute: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour12: true
+    });
+}
+
 export {
+    getDateTimeInIST,
     getCodeContext,
     parseStack
 };
