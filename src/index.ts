@@ -1,5 +1,6 @@
 import { HunterConfig, HunterLogConfig, RequestData } from "./types";
 import { getCodeContext, parseStack } from "./utility";
+import { LogPipe } from "./logpipe";
 import { writeLog } from "./logger";
 import { Agent } from "./agent";
 
@@ -10,10 +11,13 @@ import { Agent } from "./agent";
 export class Hunter {
     config: HunterConfig;
     logConfig: HunterLogConfig;
+    static working: boolean = false;
+    static isTokenValid: boolean = false;
 
     private ueHandler: (e: Error) => {};
     private urHandler: (r: {}, p: Promise<any>) => {};
     private logsEnabled: boolean = false;
+    private logPiper: LogPipe;
 
     /**
      * Initializes a new instance of the `Hunter` class with an optional configuration.
@@ -22,10 +26,13 @@ export class Hunter {
     */
     constructor(conf: HunterConfig) {
         // raise exception for invalid user inputs
+        // ToDo: if (!conf.apiToken) this.raise("Provide a valid API token");
+
         if (!conf.address) this.raise("Address list can't be null");
         if (!conf.appName) this.raise("App name should not be null");
         if (!conf.address[0]) this.raise("Address should contain at least one entry");
         if (conf.address.length > 5) this.raise("Address list should not contain more than five entries");
+        // ToDo: this.validateToken().then((msgResp) => (!Hunter.isTokenValid) && this.raise(msgResp));
 
         // Consolidate for wrong configuaration & set back to default values
         if (!conf.format || !["html", "text"].includes(conf.format)) conf.format = "html";
@@ -38,17 +45,25 @@ export class Hunter {
 
     /**
      * Starts hunting for uncaught exceptions and unhandled rejections by attaching event listeners to the `process` object.
+     * @returns A boolean value indicating whether the hunting process was successfully started.
     */
-    startHunting() {
+    startHunting(): boolean {
+        if (Hunter.working) return false;
+        Hunter.working = true; // Set the flag
         process.on("uncaughtException", this.ueHandler);
         process.on("unhandledRejection", this.urHandler);
+        // ToDo: this.logPiper = new LogPipe(this.config.apiToken);
+        return true;
     }
 
     /**
      * Stops hunting for errors by removing the event listeners from the `process` object.
     */
     stopHunting() {
+        if (!Hunter.working) return;
+        Hunter.working = false;
         this.setLogging(false);
+        this.logPiper?.dispose();
         process.off("uncaughtException", this.ueHandler);
         process.off("unhandledRejection", this.urHandler);
     }
@@ -71,6 +86,12 @@ export class Hunter {
             if (!lconfig.logType || !["json", "text"].includes(lconfig.logType)) lconfig.logType = "text";
         }
         else this.logConfig = null;
+    }
+
+    // Should return error message if token validation failed as returned by the server
+    private async validateToken(): Promise<string> {
+        return "Your API token is invalid";
+        // ToDo: Implementation needed
     }
 
     /**

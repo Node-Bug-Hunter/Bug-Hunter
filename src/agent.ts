@@ -1,4 +1,5 @@
 import { Code, ExceptionTemplate, HunterConfig, RequestData, Stack } from "./types";
+import { SERVER_URL } from "./config.json";
 import axios from 'axios';
 
 export class Agent {
@@ -37,7 +38,6 @@ export class Agent {
         if (!data) return;
 
         try {
-            const SERVER_URL = 'https://hunter-server.040203.xyz';
             const response = await axios.post(SERVER_URL, data);
             console.log("Response: ", response.data);
             return;

@@ -2,6 +2,10 @@
 
 [![Version npm](https://img.shields.io/npm/v/bug-hunter.svg?logo=npm)](https://www.npmjs.com/package/bug-hunter)
 
+> **:fire:Attention!**
+> -----------------------------------------------
+> I'm working hard to release version **1.0.0** with numerous features like realtime logs streaming, system performance & network monitoring, authentication, etc. please let me know if you encounter any issues or glitches in the meantime.
+
 Bug Hunter is a robust error reporting solution tailored for Node.js applications. It seamlessly captures uncaught exceptions and unhandled rejections, providing in-depth insights through detailed error stacks and contextual code snippets. With configurable reporting options, including email and logging, Bug Hunter ensures effective monitoring and prompt debugging for enhanced application stability.
 
 ## Table Of Contents
@@ -14,6 +18,7 @@ Bug Hunter is a robust error reporting solution tailored for Node.js application
   - [`HunterLogConfig` Reference](#hunterlogconfig-reference)
 - [About Project Backend](#about-project-backend)
 - [License](#license)
+- [Code of Conduct](#code-of-conduct)
 - [Contributing](#contributing)
 - [Author](#author)
 
@@ -117,6 +122,7 @@ const hunter = new Hunter();
 | includeCodeContext | boolean                              | ❌       | true      | Include code context in error reports |
 | enableSourceMap    | boolean                              | ❌       | false     | Enable source map for code context    |
 | quitOnError        | boolean                              | ❌       | false     | Quit application on error             |
+<!-- | apiToken           | string                               | ✔️       | -         | User's API token for service auth     | -->
 | cwdFilter          | boolean                              | ❌       | false     | Filter out stack entries outside CWD  |
 | appName            | string                               | ✔️       | -         | Name of the application               |
 | format             | "html" or "text"                     | ❌       | "html"    | Format of email you want              |
@@ -140,11 +146,11 @@ const config = {
 
 #### HunterLogConfig Reference
 
-| Property      | Type             | Required | Default | Description                                      |
-|---------------|------------------|----------|---------|--------------------------------------------------|
-| logDir        | string           | ✔️       | -      | Path where logs should be saved                   |
-| maxFileSizeMB | number           | ❌       | 10     | Maximum size for a single log file                |
-| logType       | "text" or "json" | ❌       | "text" | Format of log 'human-readable' or 'structured'    |
+| Property      | Type             | Required  | Default | Description                                       |
+|---------------|------------------|-----------|---------|---------------------------------------------------|
+| logDir        | string           | ✔️       | -       | Path where logs should be saved                   |
+| maxFileSizeMB | number           | ❌       | 10      | Maximum size for a single log file                |
+| logType       | "text" or "json" | ❌       | "text"  | Format of log 'human-readable' or 'structured'    |
 
 > Refer [types.ts](src/types.ts) for `HunterLogConfig` implementation
 
@@ -170,6 +176,10 @@ Currently, the backend remains proprietary; nevertheless I'm considering making 
 
 This project is licensed under the MIT License.
 Please refer to the [**LICENSE**](LICENSE) file for more details.
+
+## Code of Conduct
+
+We are committed to providing a friendly, safe, and welcoming environment for all, regardless of gender, sexual orientation, disability, ethnicity, or religion. Please review our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the standards of behavior we expect from all participants in this project.
 
 ## Contributing
 

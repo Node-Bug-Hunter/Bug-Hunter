@@ -29,6 +29,7 @@ export type HunterConfig = {
     enableSourceMap?: boolean
     quitOnError?: boolean
     cwdFilter?: boolean
+	// apiToken: string
     appName: string
 } & HunterEmailConfig
 
