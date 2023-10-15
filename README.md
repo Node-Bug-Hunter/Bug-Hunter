@@ -122,11 +122,11 @@ const hunter = new Hunter();
 | includeCodeContext | boolean                              | ❌       | true      | Include code context in error reports |
 | enableSourceMap    | boolean                              | ❌       | false     | Enable source map for code context    |
 | quitOnError        | boolean                              | ❌       | false     | Quit application on error             |
-<!-- | apiToken           | string                               | ✔️       | -         | User's API token for service auth     | -->
 | cwdFilter          | boolean                              | ❌       | false     | Filter out stack entries outside CWD  |
 | appName            | string                               | ✔️       | -         | Name of the application               |
 | format             | "html" or "text"                     | ❌       | "html"    | Format of email you want              |
 | address            | [{name: string, email: string}, ...] | ✔️       | -         | Array of email addresses with name    |
+<!-- | apiToken           | string                               | ✔️       | -         | User's API token for service auth     | -->
 
 > Refer [types.ts](src/types.ts) for `HunterConfig` implementation
 
