@@ -1,5 +1,5 @@
 import { Code, ExceptionTemplate, HunterConfig, RequestData, Stack } from "./types";
-import { SERVER_URL } from "./config.json";
+import { SERVER_URL, SKIP_STRING } from "./config.json";
 import axios from 'axios';
 
 export class Agent {
@@ -38,12 +38,10 @@ export class Agent {
         if (!data) return;
 
         try {
-            const response = await axios.post(SERVER_URL, data);
-            console.log("Response: ", response.data);
-            return;
+            await axios.post(SERVER_URL, data);
         }
         catch (e) {
-            console.log("Something went wrong!",
+            console.log(SKIP_STRING, "Something went wrong!",
                 e?.response?.data);
         }
     }

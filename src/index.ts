@@ -1,5 +1,6 @@
 import { HunterConfig, HunterLogConfig, RequestData } from "./types";
 import { getCodeContext, parseStack } from "./utility";
+import { SKIP_STRING } from "./config.json";
 import { LogPipe } from "./logpipe";
 import { writeLog } from "./logger";
 import { Agent } from "./agent";
@@ -100,7 +101,7 @@ export class Hunter {
      * @param err - The uncaught exception error object.
     */
     private async handleUncaughtException(err: Error) {
-        console.log('[Error-Detected]: Trying to report it...');
+        console.log(SKIP_STRING, '[Error-Detected]: Trying to report it...');
         const erStack = parseStack(err.stack ?? "", this.config.cwdFilter);
         const encodable = this.config.format === 'html';
 
@@ -135,7 +136,7 @@ export class Hunter {
     }
 
     private raise(e: string): never {
-        console.log("");
+        console.log(SKIP_STRING, "");
         this.stopHunting();
         throw new Error(e);
     }

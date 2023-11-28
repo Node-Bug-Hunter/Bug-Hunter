@@ -96,8 +96,41 @@ function getDateTimeInIST(): string {
     });
 }
 
+function JSON_Stringify(o: any) {
+    return (JSON.stringify(o, (_, v) => {
+        if (typeof v === "bigint")
+            return `BigInt(${v}n)`;
+        if (typeof v === "symbol")
+            return v.toString();
+        return v;
+    }));
+}
+
+function JSON_Parse(s: string) {
+    return (JSON.parse(s, (_, v) => {
+        if (typeof v === "string") {
+            const bigIntMatch = v.match(/BigInt\((\d+)n\)/);
+            if (bigIntMatch && bigIntMatch[1])
+                return BigInt(bigIntMatch[1]);
+
+            const symbolMatch = v.match(/Symbol\(([^)]+)\)/);
+            if (symbolMatch && symbolMatch[1])
+                return Symbol(symbolMatch[1]);
+        }
+
+        return v;
+    }));
+}
+
+function wait(delayMS: number) {
+    return new Promise((resolve) => setTimeout(resolve, delayMS));
+}
+
 export {
     getDateTimeInIST,
     getCodeContext,
-    parseStack
+    JSON_Stringify,
+    JSON_Parse,
+    parseStack,
+    wait
 };

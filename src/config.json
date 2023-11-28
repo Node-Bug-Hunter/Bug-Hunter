@@ -1,4 +1,4 @@
 {
-    "DEBUG_STRING": "<!--DEBUG-->",
+    "SKIP_STRING": "<!--SKIP-->",
     "SERVER_URL": "https://hunter-server.040203.xyz"
 }
