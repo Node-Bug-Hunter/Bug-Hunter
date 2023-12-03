@@ -10,7 +10,7 @@ import { encode } from "he";
  * @returns An array of `Stack` objects containing the extracted information from the stack trace data.
 */
 function parseStack(stackData: string, filter?: boolean): Stack[] {
-    const stackRegExp: RegExp = /at\s+(.*)\s+\((.*):(\d+):(\d+)\)/;
+    const stackRegExp: RegExp = /(?:\s*at\s+)?(?:([^()]+)\s+\()?(?:(.*?):(\d+):(\d+)|([^\s]+))\)?/;
     const stackArray = stackData.split('\n').slice(1);
     const goodStack: Stack[] = [];
 
@@ -18,7 +18,7 @@ function parseStack(stackData: string, filter?: boolean): Stack[] {
         const stackMatches = stackArray[i].match(stackRegExp);
 
         if (stackMatches && stackMatches.length > 4) {
-            let [_, fn, nm, ln, cn] = stackMatches;
+            let [, fn, nm, ln, cn] = stackMatches;
             nm = nm.replace(/^file:\/\/\//, "")
                 .replace(/\//g, "\\");
 
@@ -31,7 +31,7 @@ function parseStack(stackData: string, filter?: boolean): Stack[] {
             const stackInfo: Stack = {
                 column: parseInt(cn),
                 line: parseInt(ln),
-                function: fn,
+                function: fn ?? "",
                 file: nm
             }
 

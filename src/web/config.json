@@ -1,4 +1,5 @@
 {
+    "passCdURI": "passcode",
     "exepURI": "exception",
     "rejURI": "rejection",
     "logo": "logo.png",

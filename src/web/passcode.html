@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bug-Hunter | Issue Detected</title>
+    <meta http-equiv="Content-Type" content="text/html charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .body {
+            background: linear-gradient(140deg, #1b0032, #1d0025);
+            font-family: 'comic sans ms', 'Segoe UI';
+            background-repeat: no-repeat;
+            background-position: center;
+            text-align: center;
+            color: #edffce;
+            font-size: 18px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .body td > *:not(.head) { margin-top: 10px; }
+        .body td > div { margin-bottom: 15px; }
+
+        .table {
+            display: table;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        hr {
+            background: linear-gradient(#ffeabd56, #ffedbfef, #ffeabd4e);
+            background-color: #ffedbfef;
+            border-radius: 5px;
+            margin: 3px auto;
+            border: none;
+            height: 3px;
+            width: 80%;
+        }
+
+        .body td > .head {
+            margin: 10px 8px;
+            margin-bottom: 20px;
+        }
+        
+        .body td > .head > .sub {
+            top: -6px;
+            font-size: 12px;
+            position: relative;
+            color: #b3f6ff9c;
+            letter-spacing: -0.1px;
+            font-family: monospace;
+        }
+
+        .body td > div > .disp {
+            max-width: -moz-fit-content;
+            max-width: fit-content;
+            margin: auto;
+        }
+
+        .detail {
+            margin: auto;
+            min-width: 260px;
+            max-width: 412px;
+            padding: 8px 10px;
+            text-wrap: balance;
+            border-radius: 10px;
+            font-family: monospace;
+            background-color: #0000005c;
+        }
+
+        .detail > p {
+            font-size: 15px;
+            color: #ffd8a7;
+        }
+
+        .detail > u {
+            font-size: 12px;
+            color: #ffc2c2f9;
+            text-decoration: none;
+        }
+        
+        .detail > u > b {
+            color: #ff5a5a;
+            letter-spacing: 1px;
+        }
+
+        .detail > .otp {
+            margin: 10px 0;
+            font-size: 20px;
+            font-weight: 900;
+            color: #b7ffeb;
+            letter-spacing: 4px;
+        }
+
+        .detail > i {
+            color: #959595;
+            font-size: 13px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div style="display: none; max-width: 0px; opacity: 0; overflow: hidden;">
+        |PASSCODE| is your passcode to verify your Bug-Hunter controller account
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    </div>
+    <table class="body" bgcolor="#160023">
+        <tr><td>
+            <div class="head">
+                <img src="|LOGO_URL|" alt="BUG HUNTER">
+                <div class="sub">Bugs beware, Code's in care!</div>
+            </div>
+            <div>
+                <div class="disp">Welcome |GREETINGS|,<hr></div> <!-- "Abroad" | "Back" -->
+                <div class="detail table">
+                    <p>Use the verification code provided below to verify your <b>Bug-Hunter</b> controller account.</p>
+                    <div class="otp">|PASSCODE|</div>
+                    <u>Validity: <b>|EXPIRY|</b> minutes!<br></u>
+                </div>
+            </div>
+            <div>
+                <div class="detail">
+                    <i>&#x3C;- You can safely ignore this message if you hadn't requested for account verification -&#x3E;</i>
+                </div>
+            </div>
+        </td></tr>
+    </table>
+</body>
+</html>

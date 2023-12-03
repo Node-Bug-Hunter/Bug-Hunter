@@ -6,7 +6,7 @@ import { ErrorInfo } from "ably";
 import { Stack } from "./types";
 
 const maxLogCount = 10;
-const channelName = "info";
+const channelName = "sys-data";
 type Levels = "LOG" | "INFO" | "TABLE" | "WARN" | "ERROR";
 
 type Log = {
@@ -133,7 +133,7 @@ export class LogPipe {
             try {
                 if (sendable.length < LIMIT) {
                     await channel.publish("logs", compressedStr);
-                    break;
+                    return;
                 }
                 
                 for (let i = chunksSent; i < chunksLen; i++) { // Implemented fault tolerence to send chunks reliably
@@ -148,7 +148,7 @@ export class LogPipe {
                     chunksSent++;
                 }
                 
-                if (chunksSent >= LIMIT) break;
+                if (chunksSent >= LIMIT) return;
             }
             catch (e) {
                 if (e instanceof ErrorInfo) {
@@ -160,6 +160,9 @@ export class LogPipe {
                     }
                 }
             }
+
+            // Allow for some cool down period before retrying!
+            await wait(10 * 1000);
         }
     }
 
