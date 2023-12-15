@@ -30,6 +30,8 @@ export class Hunter extends EventEmitter {
     */
     constructor(conf: HunterConfig) {
         super();
+        if (Hunter.working)
+            this.raise("Another instance of `Hunter` is already working!");
 
         // raise exception for invalid user inputs
         if (!conf) this.raise("No configuaration provided");
@@ -42,6 +44,7 @@ export class Hunter extends EventEmitter {
         if (typeof conf.includeCodeContext === "undefined") conf.includeCodeContext = true;
         if (typeof conf.enableRemoteMonitoring === "undefined") conf.enableRemoteMonitoring = true;
 
+        Hunter.isKeyValid = false;
         this.config = conf; // We're good to go now!
         this.ueHandler = this.handleUncaughtException.bind(this);
         this.urHandler = this.handleUnhandledRejection.bind(this);
@@ -52,7 +55,7 @@ export class Hunter extends EventEmitter {
     /**
      * Starts hunting for uncaught exceptions and unhandled rejections by attaching event listeners to the `process` object.
      * @returns A boolean value indicating whether the hunting process was successfully started.
-     * *Returns `false` if  API-Key is not yet validated or if the process is already running!*
+     * *Returns `false` if the process is already running!*
     */
     startHunting(): boolean {
         if (Hunter.working) return false;
@@ -123,14 +126,13 @@ export class Hunter extends EventEmitter {
      * @param err - The uncaught exception error object.
     */
     private async handleUncaughtException(err: Error) {
-        if (!Hunter.isKeyValid) return console.log(SKIP_STRING, "[Error-Detected]: API key not yet validated, skipping...");
+        if (!Hunter.isKeyValid) console.log(SKIP_STRING, "[Error-Detected]: API key not yet validated");
         console.log(SKIP_STRING, '[Error-Detected]: Trying to report it...');
         const erStack = parseStack(err.stack ?? "", this.config.cwdFilter);
         const encodable = this.config.format === 'html';
 
         const exepData = Agent.buildExepData(this.config, err.message, erStack, this.config
             .includeCodeContext ? await getCodeContext(erStack[0], encodable) : []);
-
         exepData.status = this.config.quitOnError ? "Ended" : "Running";
 
         const payload: RequestPayload = {
@@ -147,7 +149,11 @@ export class Hunter extends EventEmitter {
             ...exepData
         });
 
-        await Agent.sendRequest(payload);
+        console.log(SKIP_STRING, "\n[!] Error Encountered [!]", "\nError Message:",
+            exepData.errorMessage, "\nStack-Trace:", exepData.stack, "\nCode-Context",
+            exepData.hasCode ? exepData.code.map(code => `${code.lineNo}${code.isBuggy ? ">" : ":"} ${code.code.replace(/&nbsp;/g, " ")}`) : "{Not-Available}");
+        
+        if (Hunter.isKeyValid) await Agent.sendRequest(payload);
         if (this.config.quitOnError) process.exit(1);
     }
 
