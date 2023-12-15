@@ -1,6 +1,7 @@
-import { HunterConfig, HunterLogConfig, RequestData } from "./types";
-import { getCodeContext, parseStack } from "./utility";
+import { HunterConfig, HunterLogConfig, MachineData, RequestPayload } from "./types";
+import { getCodeContext, getSetIdConfig, parseStack } from "./utility";
 import { SKIP_STRING } from "./config.json";
+import EventEmitter = require("events");
 import { LogPipe } from "./logpipe";
 import { writeLog } from "./logger";
 import { Agent } from "./agent";
@@ -9,15 +10,17 @@ import { Agent } from "./agent";
  * The `Hunter` class is responsible for handling uncaught exceptions and unhandled rejections in a Node.js application.
  * It provides methods to start and stop hunting for these errors, and handles them by reporting or logging the error information.
 */
-export class Hunter {
+export class Hunter extends EventEmitter {
     config: HunterConfig;
     logConfig: HunterLogConfig;
+
     static working: boolean = false;
-    static isTokenValid: boolean = false;
+    static isKeyValid: boolean = false;
 
     private ueHandler: (e: Error) => {};
     private urHandler: (r: {}, p: Promise<any>) => {};
     private logsEnabled: boolean = false;
+    private machineData: MachineData;
     private logPiper: LogPipe;
 
     /**
@@ -26,45 +29,52 @@ export class Hunter {
      * @param conf - Configuration for the `Hunter` instance.
     */
     constructor(conf: HunterConfig) {
-        // raise exception for invalid user inputs
-        // ToDo: if (!conf.apiToken) this.raise("Provide a valid API token");
+        super();
 
-        if (!conf.address) this.raise("Address list can't be null");
+        // raise exception for invalid user inputs
+        if (!conf) this.raise("No configuaration provided");
+        if (!conf.apiKey) this.raise("Provide a valid API key");
         if (!conf.appName) this.raise("App name should not be null");
-        if (!conf.address[0]) this.raise("Address should contain at least one entry");
-        if (conf.address.length > 5) this.raise("Address list should not contain more than five entries");
-        // ToDo: this.validateToken().then((msgResp) => (!Hunter.isTokenValid) && this.raise(msgResp));
+        if (!conf.email) this.raise("Email is required and it can't be null");
 
         // Consolidate for wrong configuaration & set back to default values
         if (!conf.format || !["html", "text"].includes(conf.format)) conf.format = "html";
-        if (!conf.includeCodeContext) conf.includeCodeContext = true;
+        if (typeof conf.includeCodeContext === "undefined") conf.includeCodeContext = true;
+        if (typeof conf.enableRemoteMonitoring === "undefined") conf.enableRemoteMonitoring = true;
 
         this.config = conf; // We're good to go now!
         this.ueHandler = this.handleUncaughtException.bind(this);
         this.urHandler = this.handleUnhandledRejection.bind(this);
+        this.machineData = getSetIdConfig(this.config.appName, conf.enableRemoteMonitoring);
+        this.validateAPIKey().then((msgResp) => (!Hunter.isKeyValid) && console.log(SKIP_STRING, msgResp));
     }
 
     /**
      * Starts hunting for uncaught exceptions and unhandled rejections by attaching event listeners to the `process` object.
      * @returns A boolean value indicating whether the hunting process was successfully started.
+     * *Returns `false` if  API-Key is not yet validated or if the process is already running!*
     */
     startHunting(): boolean {
         if (Hunter.working) return false;
-        Hunter.working = true; // Set the flag
-        process.on("uncaughtException", this.ueHandler);
+
+        if (this.config.enableRemoteMonitoring)
+            this.logPiper = new LogPipe(this.config.apiKey, this.machineData);
         process.on("unhandledRejection", this.urHandler);
-        // ToDo: this.logPiper = new LogPipe(this.config.apiToken);
+        process.on("uncaughtException", this.ueHandler);
+        Hunter.working = true; // Set the flag
+
         return true;
     }
 
     /**
-     * Stops hunting for errors by removing the event listeners from the `process` object.
+     * Stops hunting for errors by removing the event listeners from the `process` object and disposes off active resources being used.
     */
     stopHunting() {
         if (!Hunter.working) return;
+
         Hunter.working = false;
         this.setLogging(false);
-        this.logPiper?.dispose();
+        this.logPiper?.dispose().then();
         process.off("uncaughtException", this.ueHandler);
         process.off("unhandledRejection", this.urHandler);
     }
@@ -90,9 +100,21 @@ export class Hunter {
     }
 
     // Should return error message if token validation failed as returned by the server
-    private async validateToken(): Promise<string> {
-        return "Your API token is invalid";
-        // ToDo: Implementation needed
+    private async validateAPIKey(): Promise<string> {
+        const payload: RequestPayload = {
+            machineData: this.machineData,
+            email: this.config.email,
+            auth: this.config.apiKey,
+            type: "authcheck"
+        }
+
+        const [ok, resp] = await Agent
+            .sendRequest(payload);
+        Hunter.isKeyValid = ok < 300;
+        this.emit("key-status", ok < 300);
+        if (ok >= 400 && ok < 500 && resp) this.raise(resp.msg);
+
+        return "Unable to validate api-key, check your network connection";
     }
 
     /**
@@ -101,6 +123,7 @@ export class Hunter {
      * @param err - The uncaught exception error object.
     */
     private async handleUncaughtException(err: Error) {
+        if (!Hunter.isKeyValid) return console.log(SKIP_STRING, "[Error-Detected]: API key not yet validated, skipping...");
         console.log(SKIP_STRING, '[Error-Detected]: Trying to report it...');
         const erStack = parseStack(err.stack ?? "", this.config.cwdFilter);
         const encodable = this.config.format === 'html';
@@ -110,18 +133,21 @@ export class Hunter {
 
         exepData.status = this.config.quitOnError ? "Ended" : "Running";
 
-        const rqData: RequestData = {
+        const payload: RequestPayload = {
+            machineData: this.machineData,
             format: this.config.format,
+            email: this.config.email,
+            auth: this.config.apiKey,
             type: "exception",
-            data: exepData
+            ...exepData
         }
-        
+
         if (this.logsEnabled) writeLog({
             config: this.logConfig,
             ...exepData
         });
 
-        await Agent.sendHuntedData(rqData);
+        await Agent.sendRequest(payload);
         if (this.config.quitOnError) process.exit(1);
     }
 

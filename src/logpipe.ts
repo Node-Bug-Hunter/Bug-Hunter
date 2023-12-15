@@ -1,12 +1,11 @@
 import { JSON_Stringify, parseStack, wait } from "./utility";
 import { Realtime, Rest, Types } from "ably/promises";
+import { MSGEvent, MachineData, Stack } from "./types";
 import { SKIP_STRING } from "./config.json";
 import { compress } from "./packer";
 import { ErrorInfo } from "ably";
-import { Stack } from "./types";
 
 const maxLogCount = 10;
-const channelName = "sys-data";
 type Levels = "LOG" | "INFO" | "TABLE" | "WARN" | "ERROR";
 
 type Log = {
@@ -23,39 +22,51 @@ type LogObject = {
 
 export class LogPipe {
     private disposed = false;
+    private identifier: string;
     private queueActive = false;
-    private userApiToken: string;
+    private isReadyToListen = false;
+    private machineData: MachineData;
     private realtimeAbly: Types.RealtimePromise;
-    private restAblyChannel: Types.ChannelPromise;
+    private webObserverPresent: boolean = false;
+    private realtimeChannel: Types.RealtimeChannelPromise;
     private logsQueue: [Function, LogObject, AbortController][];
 
-    constructor(token: string) {
+    constructor(key: string, _md: MachineData) {
         const log = console.log, info = console.info, warn = console.warn, table = console.table, error = console.error;
         const fnMaps: [Levels, Function][] = [["LOG", log], ["INFO", info],
             ["WARN", warn], ["TABLE", table], ["ERROR", error]];
         for (const fnMap of fnMaps) this.applyToConsole(fnMap);
 
-        this.userApiToken = token;
-        this.realtimeAbly = new Realtime.Promise(token);
-        this.restAblyChannel = new Rest.Promise(token).channels.get(channelName);
+        this.machineData = _md;
+        this.identifier = `package|${_md.id}`;
+        this.realtimeAbly = new Realtime.Promise({ key, clientId: this.identifier });
+
+        this.realtimeAbly.connection.once("connected").then(() => {
+            this.realtimeChannel = this.realtimeAbly.channels.get(_md.id);
+            this.realtimeChannel.subscribe(this.handleMessages);
+            this.realtimeChannel.presence.enter("package");
+            
+            this.realtimeChannel.presence.subscribe((pm) => {
+                const isActive = pm.action === "enter" || pm.action === "present" || pm.action === "update";
+                if (pm.clientId.startsWith("web|") && pm.clientId.split("|")[1] === _md.id) this.webObserverPresent = isActive;
+            });
+        });
     }
 
     async dispose() {
         if (this.disposed) return;
         this.disposed = true;
         
-        for (const [,, controller] of this.logsQueue) {
-            controller.abort();
+        if (this.logsQueue) {
+            for (const [,, controller] of this.logsQueue) controller.abort();
+            this.logsQueue.length = 0;
         }
 
-        this.logsQueue.length = 0;
         this.queueActive = false;
         this.realtimeAbly.close();
 
         await this.realtimeAbly
             .connection.once("closed");
-
-        this.restAblyChannel = null;
         this.realtimeAbly = null;
     }
 
@@ -96,6 +107,14 @@ export class LogPipe {
         }
     }
 
+    private handleMessages(msg: Types.Message) {
+        switch (msg.name as MSGEvent) {
+            case "monitor-start": this.isReadyToListen = true; break;
+            case "monitor-stop": this.isReadyToListen = false; break;
+            default: break;
+        }
+    }
+
     private async runDispatcher() {
         if (!this.queueActive) return;
         const dispatchable = this.logsQueue[0];
@@ -122,9 +141,9 @@ export class LogPipe {
         
         let chunksSent = 0;
         const LIMIT = 20_480;
+        await this.becomeDispatchable();
         const transport = JSON_Stringify(logObj);
         const compressedStr = compress(transport, 15);
-        const channel = await this.becomeDispatchable();
         const sendable = (compressedStr.length > transport.length) ? transport : compressedStr;
         let chunksLen = Number.parseInt(`${sendable.length / LIMIT}`);
         if (sendable.length % LIMIT > 0) chunksLen++;
@@ -132,16 +151,17 @@ export class LogPipe {
         while (true) {
             try {
                 if (sendable.length < LIMIT) {
-                    await channel.publish("logs", compressedStr);
+                    await this.realtimeChannel
+                        .publish("logs", compressedStr);
                     return;
                 }
                 
                 for (let i = chunksSent; i < chunksLen; i++) { // Implemented fault tolerence to send chunks reliably
                     const chunk = sendable.slice(i * LIMIT, (i + 1) * LIMIT);
 
-                    await channel.publish("logs", {
-                        part: chunksSent + 1,
+                    await this.realtimeChannel.publish("logs", {
                         chunked: true,
+                        part: i + 1,
                         chunk
                     });
 
@@ -167,17 +187,14 @@ export class LogPipe {
     }
 
     private async becomeDispatchable() {
+        if (this.realtimeAbly.connection.state !== "connected")
+            await this.realtimeAbly.connection.once("connected");
+        
         while (true) {
-            try {
-                const channelStatus = (await this.restAblyChannel.status()).status;
-                if (channelStatus.occupancy.metrics.subscribers > 0) break;
-            } catch { }
-
-            await wait(4000);
+            if (this.isReadyToListen && this.webObserverPresent)
+                return true;
+            await wait(500);
         }
-
-        await this.realtimeAbly.connection.once("connected"); // This will get resolved immediately in most of the cases
-        return this.realtimeAbly.channels.get(channelName);
     }
 }
 

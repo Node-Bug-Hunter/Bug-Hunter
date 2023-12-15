@@ -1,7 +1,11 @@
-import { createReadStream, existsSync } from "fs";
+import { createReadStream, existsSync, fstat, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { createInterface } from "readline";
-import { Code, Stack } from "./types";
+import { Code, MachineData, Stack } from "./types";
+import path = require("path");
 import { encode } from "he";
+import os = require("os");
+import * as crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Parses the stack trace data to extract relevant information such as the function name, file name, line number, and column number.
@@ -40,6 +44,77 @@ function parseStack(stackData: string, filter?: boolean): Stack[] {
     }
 
     return goodStack.filter(s => s !== null);
+}
+
+function getAppDataFolder(...app: string[]) {
+    let appData: string;
+    
+    function prependDot(...app) {
+        return app.map((item, i) => {
+            if (i === 0) return `.${item}`;
+            return item;
+        });
+    }
+
+    if (process.platform === 'win32') appData = path.join(process.env.APPDATA, ...app);
+    else if (process.platform === 'darwin') appData = path.join(process.env.HOME, 'Library', 'Application Support', ...app);
+    else appData = path.join(process.env.HOME, ...prependDot(...app));
+
+    return appData;
+}
+
+function generateMachineId(): string {
+    function getMacAddress() {
+        const networkInterfaces = os.networkInterfaces();
+        // Find the first non-internal MAC address
+        for (const interfaceName of Object.keys(networkInterfaces))
+            for (const interfaceInfo of networkInterfaces[interfaceName])
+                if (!interfaceInfo.internal && interfaceInfo.mac)
+                    // Remove colons to get a continuous string
+                    return interfaceInfo.mac.replace(/:/g, '');
+
+        return null;
+    }
+
+    function secureRandomNumber(min: number, max: number) {
+        const range = max - min + 1;
+        if (range <= 0) return Math.random() * max;
+
+        // Generate random bytes
+        // Calculate the number of bytes needed to represent the range
+        const byteSize = Math.ceil(Math.log2(range) / 8);      
+        const randomBytes = crypto.randomBytes(byteSize);
+        const random = randomBytes.readUIntBE(0, byteSize) % range;
+
+        return min + random;
+    }
+
+    // Combine machine-specific information, UUID, and randomness
+    const combinedInfo = `${os.hostname()}${os.arch()}${os.platform()}
+        ${getMacAddress()}${uuidv4()}${crypto.randomBytes(16).toString('hex')}`;
+    const machineId = crypto.createHash('sha256').update(combinedInfo).digest('hex');
+    const rndLen = secureRandomNumber(10, 15), rndStart = secureRandomNumber
+        (0, 64 - (rndLen + 1)), rndSuffix = secureRandomNumber(-55, 55);
+    const newIdHash = machineId.substring(rndStart, rndStart + rndLen);
+
+    return `${newIdHash};${rndSuffix}`;
+}
+
+export function getSetIdConfig(name: string, active: boolean): MachineData {
+    const adf = getAppDataFolder("bug-hunter");
+    const idPath = `${adf}/id.txt`;
+
+    if (existsSync(adf)) {
+        const idStr = readFileSync(idPath, { encoding: "utf-8" });
+        return ({ name, id: idStr, monitoring: active });
+    }
+
+    const id = generateMachineId();
+    mkdirSync(adf, { recursive: true });
+    const appConfig = { name, id, monitoring: active };
+    writeFileSync(idPath, appConfig.id, { encoding: "utf-8" });
+
+    return appConfig;
 }
 
 /**

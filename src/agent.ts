@@ -1,4 +1,4 @@
-import { Code, ExceptionTemplate, HunterConfig, RequestData, Stack } from "./types";
+import { Code, ExceptionTemplate, HunterConfig, RequestPayload, Stack } from "./types";
 import { SERVER_URL, SKIP_STRING } from "./config.json";
 import axios from 'axios';
 
@@ -14,9 +14,7 @@ export class Agent {
     */
     static buildExepData(cnf: HunterConfig, erMsg: string, stacks: Stack[], codes: Code[]): ExceptionTemplate {
         let reqData: ExceptionTemplate = {
-            phishingPhrase: cnf.antiPhishingPhrase,
             hasCode: cnf.includeCodeContext,
-            address: cnf.address,
             errorMessage: erMsg,
             status: "Normal",
             app: cnf.appName,
@@ -29,20 +27,23 @@ export class Agent {
     }
 
     /**
-     * Sends the provided `RequestData` object to the server using the axios library.
+     * Sends the provided `RequestPayload` to the server using the axios library.
      * Handles both successful and failed requests and logs the response or error message accordingly.
      * 
-     * @param data - The data object to be sent to the server.
+     * @param data - The data payload to be sent to the server.
     */
-    static async sendHuntedData(data: RequestData) {
-        if (!data) return;
+    static async sendRequest(data: RequestPayload): Promise<[number, { data?: any; msg: string; ok: boolean; code: number; } | null]> {
+        if (!data) return [1000, null];
 
         try {
-            await axios.post(SERVER_URL, data);
+            const response = await axios.post(SERVER_URL, data);
+            return [response.status, response.data];
         }
         catch (e) {
             console.log(SKIP_STRING, "Something went wrong!",
                 e?.response?.data);
         }
+
+        return [1000, null];
     }
 }

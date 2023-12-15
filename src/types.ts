@@ -1,13 +1,6 @@
 type Address = { name: string, email: string };
-type MaxAddress = [Address, Address?, Address?, Address?, Address?];
 
 // #region Hunter Configuration Typings
-
-type HunterEmailConfig = {
-    antiPhishingPhrase?: string
-    format?: "html" | "text"
-    address: MaxAddress
-}
 
 /**
  * Represents the config options to enable logging
@@ -22,20 +15,23 @@ export type HunterLogConfig = {
 }
 
 /**
- * Represents the configuration options for a hunter, which can be used for reporting either via email or log.
+ * Represents the configuration options for a hunter, which can be used for reporting.
 */
 export type HunterConfig = {
+    enableRemoteMonitoring?: boolean
     includeCodeContext?: boolean
     enableSourceMap?: boolean
+    format?: "html" | "text"
     quitOnError?: boolean
     cwdFilter?: boolean
-	// apiToken: string
     appName: string
-} & HunterEmailConfig
+	apiKey: string
+	email: string
+}
 
 // #endregion
 
-//#region Template Typings
+// #region Template Typings
 
 export type Stack = {
 	function: string
@@ -54,9 +50,7 @@ export type Code = {
  * Represents an exception or rejection template.
 */
 export type ExceptionTemplate = {
-	phishingPhrase?: string
 	errorMessage: string
-    address: MaxAddress
 	stack: Stack[]
 	status: string
 	app: string
@@ -65,28 +59,39 @@ export type ExceptionTemplate = {
 	hasCode: true
 } | { hasCode: false })
 
-export type RejectionTemplate = {
+// #endregion
+
+// #region Request Payloads Typing
+
+type AuthCheckPayload = {
+	type: "authcheck"
 }
 
-// #endregion
+type ExceptionPayload = ExceptionTemplate & {
+	format: "html" | "text"
+	type: "exception"
+}
+
+export type MachineData = {
+	monitoring: boolean
+	name: string,
+	id: string
+}
 
 /**
  * Represents outgoing request data to the hunter-server
 */
-export type RequestData = {
-	format: "html" | "text"
-} & ({
-	type: "exception"
-	data: ExceptionTemplate
-} | {
-	type: "rejection"
-	data: RejectionTemplate
-})
+export type RequestPayload = {
+	machineData: MachineData
+	email: string
+	auth: string
+} & (ExceptionPayload | AuthCheckPayload);
+
+// #endregion
 
 /**
  * Represents loggable data
 */
-export type LoggableData = Omit<ExceptionTemplate,
-	"phishingPhrase" | "address" | "app"> & {
-	config: HunterLogConfig
-}
+export type LoggableData = Omit<ExceptionTemplate, "app"> & { config: HunterLogConfig }
+
+export type MSGEvent = "monitor-start" | "monitor-stop";
