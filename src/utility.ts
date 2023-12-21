@@ -1,6 +1,6 @@
 import { createReadStream, existsSync, fstat, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { createInterface } from "readline";
 import { Code, MachineData, Stack } from "./types";
+import { createInterface } from "readline";
 import path = require("path");
 import { encode } from "he";
 import os = require("os");
@@ -17,18 +17,19 @@ function parseStack(stackData: string, filter?: boolean): Stack[] {
     const stackRegExp: RegExp = /(?:\s*at\s+)?(?:([^()]+)\s+\()?(?:(.*?):(\d+):(\d+)|([^\s]+))\)?/;
     const stackArray = stackData.split('\n').slice(1);
     const goodStack: Stack[] = [];
+    const cwd = process.cwd();
 
     for (let i = 0; i < stackArray.length; i++) {
         const stackMatches = stackArray[i].match(stackRegExp);
 
         if (stackMatches && stackMatches.length > 4) {
             let [, fn, nm, ln, cn] = stackMatches;
-            nm = nm.replace(/^file:\/\/\//, "")
-                .replace(/\//g, "\\");
+            if (typeof nm !== "string" || typeof ln !==
+                "string" || typeof cn !== "string") continue;
+            nm = nm.replace(/^file:\/\/\//, "").replace(/\//g, "\\");
 
             if (filter) {
-                const cwd = process.cwd();
-                if (!nm.startsWith(cwd)) break;
+                if (!nm.startsWith(cwd)) continue;
                 nm = "." + nm.replace(cwd, "");
             }
 

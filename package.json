@@ -1,7 +1,7 @@
 {
 	"license": "MIT",
 	"private": false,
-	"version": "0.7.1",
+	"version": "0.7.4",
 	"name": "bug-hunter",
 	"main": "./out/index.js",
 	"types": "./out/index.d.ts",
@@ -13,7 +13,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Techzy-Programmer/Bug-Hunter.git"
+		"url": "git+https://github.com/Node-Bug-Hunter/Bug-Hunter.git"
 	},
 	"exports": {
 		"default": "./out/index.js"

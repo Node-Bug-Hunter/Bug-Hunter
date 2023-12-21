@@ -1,23 +1,24 @@
 import { JSON_Stringify, parseStack, wait } from "./utility";
-import { Realtime, Rest, Types } from "ably/promises";
 import { MSGEvent, MachineData, Stack } from "./types";
+import { Realtime, Rest, Types } from "ably/promises";
 import { SKIP_STRING } from "./config.json";
 import { compress } from "./packer";
+import { createHash } from "crypto";
 import { ErrorInfo } from "ably";
 
 const maxLogCount = 10;
-type Levels = "LOG" | "INFO" | "TABLE" | "WARN" | "ERROR";
+type Level = "LOG" | "INFO" | "TABLE" | "WARN" | "ERROR";
 
 type Log = {
-    logValue: string;
+    logValue: any;
     type: string;
 }
 
 type LogObject = {
     timeStamp: number;
-    logLevel: Levels;
+    logLevel: Level;
     data: Log[];
-    at: Stack[];
+    at: Stack;
 };
 
 export class LogPipe {
@@ -29,11 +30,11 @@ export class LogPipe {
     private realtimeAbly: Types.RealtimePromise;
     private webObserverPresent: boolean = false;
     private realtimeChannel: Types.RealtimeChannelPromise;
-    private logsQueue: [Function, LogObject, AbortController][];
+    private logsQueue: [Function, LogObject, AbortController][] = [];
 
     constructor(key: string, _md: MachineData) {
         const log = console.log, info = console.info, warn = console.warn, table = console.table, error = console.error;
-        const fnMaps: [Levels, Function][] = [["LOG", log], ["INFO", info],
+        const fnMaps: [Level, Function][] = [["LOG", log], ["INFO", info],
             ["WARN", warn], ["TABLE", table], ["ERROR", error]];
         for (const fnMap of fnMaps) this.applyToConsole(fnMap);
 
@@ -43,7 +44,7 @@ export class LogPipe {
 
         this.realtimeAbly.connection.once("connected").then(() => {
             this.realtimeChannel = this.realtimeAbly.channels.get(_md.id);
-            this.realtimeChannel.subscribe(this.handleMessages);
+            this.realtimeChannel.subscribe(this.handleMessages.bind(this));
             this.realtimeChannel.presence.enter("package");
             
             this.realtimeChannel.presence.subscribe((pm) => {
@@ -57,11 +58,10 @@ export class LogPipe {
         if (this.disposed) return;
         this.disposed = true;
         
-        if (this.logsQueue) {
-            for (const [,, controller] of this.logsQueue) controller.abort();
-            this.logsQueue.length = 0;
-        }
-
+        for (const [,, controller]
+            of this.logsQueue) controller.abort();
+        
+        this.logsQueue.length = 0;
         this.queueActive = false;
         this.realtimeAbly.close();
 
@@ -70,7 +70,7 @@ export class LogPipe {
         this.realtimeAbly = null;
     }
 
-    private applyToConsole(map: [Levels, Function]) {
+    private applyToConsole(map: [Level, Function]) {
         const fnName = map[0].toLowerCase();
         const instance: LogPipe = this;
 
@@ -85,16 +85,15 @@ export class LogPipe {
 
             map[1].apply(console, args);
             if (instance.disposed) return;
+            const { stack } = new Error();
             const loggedData = args.map(createLogPiece);
-            const callStack = parseStack(new Error().stack, true);
-            if (callStack.length > 5) callStack.length = 5;
-            callStack.shift();
+            const callStack = parseStack(stack, true);
 
             const logObj = {
                 timeStamp: Date.now(),
                 data: loggedData,
                 logLevel: map[0],
-                at: callStack
+                at: callStack[0]
             };
 
             instance.logsQueue.push([instance.dispatchLogs,
@@ -111,12 +110,13 @@ export class LogPipe {
         switch (msg.name as MSGEvent) {
             case "monitor-start": this.isReadyToListen = true; break;
             case "monitor-stop": this.isReadyToListen = false; break;
+
             default: break;
         }
     }
 
     private async runDispatcher() {
-        if (!this.queueActive) return;
+        if (this.queueActive) return;
         const dispatchable = this.logsQueue[0];
 
         if (this.logsQueue.length === 0 || !dispatchable) {
@@ -127,7 +127,7 @@ export class LogPipe {
         try {
             this.queueActive = true;
             const [dispatcher, logObj, logAborter] = dispatchable;
-            await dispatcher(logObj, logAborter.signal);
+            await dispatcher.call(this, logObj, logAborter.signal);
         } catch { }
 
         this.queueActive = false;
@@ -139,11 +139,23 @@ export class LogPipe {
         (signal as any).addEventListener("abort",
             () => { throw new Error() });
         
+        async function becomeDispatchable() {
+            if (this.realtimeAbly.connection.state !== "connected")
+                await this.realtimeAbly.connection.once("connected");
+            
+            while (true) {
+                if (this.isReadyToListen && this.webObserverPresent)
+                    return Promise.resolve(true);
+                await wait(500);
+            }
+        }
+
         let chunksSent = 0;
         const LIMIT = 20_480;
-        await this.becomeDispatchable();
+        await becomeDispatchable.call(this);
         const transport = JSON_Stringify(logObj);
         const compressedStr = compress(transport, 15);
+        const msgId = createHash('md5').update(transport).digest('hex');
         const sendable = (compressedStr.length > transport.length) ? transport : compressedStr;
         let chunksLen = Number.parseInt(`${sendable.length / LIMIT}`);
         if (sendable.length % LIMIT > 0) chunksLen++;
@@ -158,10 +170,12 @@ export class LogPipe {
                 
                 for (let i = chunksSent; i < chunksLen; i++) { // Implemented fault tolerence to send chunks reliably
                     const chunk = sendable.slice(i * LIMIT, (i + 1) * LIMIT);
+                    const tobeId = i + 1;
 
                     await this.realtimeChannel.publish("logs", {
-                        chunked: true,
-                        part: i + 1,
+                        final: tobeId >= LIMIT,
+                        chunkId: msgId,
+                        part: tobeId,
                         chunk
                     });
 
@@ -185,24 +199,13 @@ export class LogPipe {
             await wait(10 * 1000);
         }
     }
-
-    private async becomeDispatchable() {
-        if (this.realtimeAbly.connection.state !== "connected")
-            await this.realtimeAbly.connection.once("connected");
-        
-        while (true) {
-            if (this.isReadyToListen && this.webObserverPresent)
-                return true;
-            await wait(500);
-        }
-    }
 }
 
 function createLogPiece(a: unknown): Log {
-    let logValue: string = JSON_Stringify(a);
+    let logValue: any = a;
 
     if (typeof a === "function")
-        logValue = JSON_Stringify({ name: a.name });
+        logValue = { name: a.name };
     
     return ({
         type: getTypeOf(a),
