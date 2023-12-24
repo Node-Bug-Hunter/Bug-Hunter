@@ -88,6 +88,7 @@ export class LogPipe {
             const { stack } = new Error();
             const loggedData = args.map(createLogPiece);
             const callStack = parseStack(stack, true);
+            if (callStack.length === 0) return;
 
             const logObj = {
                 timeStamp: Date.now(),
