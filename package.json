@@ -1,7 +1,7 @@
 {
 	"license": "MIT",
 	"private": false,
-	"version": "0.7.4",
+	"version": "0.7.8",
 	"name": "bug-hunter",
 	"main": "./out/index.js",
 	"types": "./out/index.d.ts",
