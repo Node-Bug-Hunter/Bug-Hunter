@@ -1,12 +1,14 @@
 import { JSON_Stringify, parseStack, wait } from "./utility";
 import { MSGEvent, MachineData, Stack } from "./types";
-import { Realtime, Rest, Types } from "ably/promises";
+import { Realtime, Types } from "ably/promises";
 import { SKIP_STRING } from "./config.json";
+import EventEmitter = require("events");
 import { compress } from "./packer";
 import { createHash } from "crypto";
 import { ErrorInfo } from "ably";
 
 const maxLogCount = 10;
+const feedbackMSGS = ["monitor-start", "monitor-stop"];
 type Level = "LOG" | "INFO" | "TABLE" | "WARN" | "ERROR";
 
 type Log = {
@@ -21,14 +23,39 @@ type LogObject = {
     at: Stack;
 };
 
+class Notifier extends EventEmitter {
+    private webObserverPresent = false;
+    private isReadyToListen = false;
+
+    constructor() { super(); }
+
+    setListenState(state: boolean) {
+        this.isReadyToListen = state;
+        this.emit("listen");
+    }
+
+    setObserverState(state: boolean) {
+        this.webObserverPresent = state;
+        this.emit("observer");
+    }
+
+    onFulfilled() {
+        return new Promise((resolve) => {
+            const tryResolve = () => this.isReadyToListen && this.webObserverPresent && resolve("");
+            this.on("observer", () => tryResolve());
+            this.on("listen", () => tryResolve());
+            tryResolve();
+        })
+    }
+}
+
 export class LogPipe {
     private disposed = false;
     private identifier: string;
     private queueActive = false;
-    private isReadyToListen = false;
     private machineData: MachineData;
+    private notifier = new Notifier();
     private realtimeAbly: Types.RealtimePromise;
-    private webObserverPresent: boolean = false;
     private realtimeChannel: Types.RealtimeChannelPromise;
     private logsQueue: [Function, LogObject, AbortController][] = [];
 
@@ -49,7 +76,7 @@ export class LogPipe {
             
             this.realtimeChannel.presence.subscribe((pm) => {
                 const isActive = pm.action === "enter" || pm.action === "present" || pm.action === "update";
-                if (pm.clientId.startsWith("web|") && pm.clientId.split("|")[1] === _md.id) this.webObserverPresent = isActive;
+                if (pm.clientId.startsWith("web|") && pm.clientId.split("|")[1] === _md.id) this.notifier.setObserverState(isActive);
             });
         });
     }
@@ -107,13 +134,18 @@ export class LogPipe {
         }
     }
 
-    private handleMessages(msg: Types.Message) {
-        switch (msg.name as MSGEvent) {
-            case "monitor-start": this.isReadyToListen = true; break;
-            case "monitor-stop": this.isReadyToListen = false; break;
+    private async handleMessages(msg: Types.Message) {
+        const { data, name } = msg;
+
+        switch (name as MSGEvent) {
+            case "monitor-start": this.notifier.setListenState(true); break;
+            case "monitor-stop": this.notifier.setListenState(false); break;
 
             default: break;
         }
+
+        if (feedbackMSGS.includes(msg.name))
+            await this.realtimeChannel?.publish("feedback", data);
     }
 
     private async runDispatcher() {
@@ -128,7 +160,7 @@ export class LogPipe {
         try {
             this.queueActive = true;
             const [dispatcher, logObj, logAborter] = dispatchable;
-            await dispatcher.call(this, logObj, logAborter.signal);
+            await dispatcher.bind(this, logObj, logAborter.signal)();
         } catch { }
 
         this.queueActive = false;
@@ -136,24 +168,20 @@ export class LogPipe {
         this.runDispatcher();
     }
 
-    private async dispatchLogs(logObj: LogObject, signal: AbortSignal) {
-        (signal as any).addEventListener("abort",
-            () => { throw new Error() });
+    private async dispatchLogs(logObj: LogObject, signal: any) {
+        // I don't know but for some reason in TS signal when typed as 'AbortSignal' doesn't supports 'addEventListener'
+        const aborter = new Promise((_, reject) => signal.addEventListener("abort", () => reject()));
         
-        async function becomeDispatchable() {
+        async function becomeDispatchable(this: LogPipe) {
             if (this.realtimeAbly.connection.state !== "connected")
                 await this.realtimeAbly.connection.once("connected");
-            
-            while (true) {
-                if (this.isReadyToListen && this.webObserverPresent)
-                    return Promise.resolve(true);
-                await wait(500);
-            }
+            await this.notifier.onFulfilled();
         }
+
+        await Promise.race([becomeDispatchable.call(this), aborter]);
 
         let chunksSent = 0;
         const LIMIT = 20_480;
-        await becomeDispatchable.call(this);
         const transport = JSON_Stringify(logObj);
         const compressedStr = compress(transport, 15);
         const msgId = createHash('md5').update(transport).digest('hex');
@@ -164,8 +192,8 @@ export class LogPipe {
         while (true) {
             try {
                 if (sendable.length < LIMIT) {
-                    await this.realtimeChannel
-                        .publish("logs", compressedStr);
+                    await Promise.race([this.realtimeChannel
+                        .publish("logs", compressedStr), aborter]);
                     return;
                 }
                 
@@ -173,12 +201,12 @@ export class LogPipe {
                     const chunk = sendable.slice(i * LIMIT, (i + 1) * LIMIT);
                     const tobeId = i + 1;
 
-                    await this.realtimeChannel.publish("logs", {
+                    await Promise.race([this.realtimeChannel.publish("logs", {
                         final: tobeId >= LIMIT,
                         chunkId: msgId,
                         part: tobeId,
                         chunk
-                    });
+                    }), aborter]);
 
                     chunksSent++;
                 }
@@ -197,7 +225,7 @@ export class LogPipe {
             }
 
             // Allow for some cool down period before retrying!
-            await wait(10 * 1000);
+            await Promise.race([wait(10 * 1000), aborter]);
         }
     }
 }
