@@ -39,13 +39,24 @@ class Notifier extends EventEmitter {
         this.emit("observer");
     }
 
-    onFulfilled() {
+    onFulfilled(signal: any) {
         return new Promise((resolve) => {
-            const tryResolve = () => this.isReadyToListen && this.webObserverPresent && resolve("");
-            this.on("observer", () => tryResolve());
-            this.on("listen", () => tryResolve());
+            const tryResolve = () => {
+                if (!this.isReadyToListen || !this.webObserverPresent) return;
+                disposeListeners.call(this);
+                resolve("");
+            };
+
+            function disposeListeners(this: Notifier) {
+                this.off("observer", tryResolve);
+                this.off("listen", tryResolve);
+            }
+
+            signal.addEventListener("abort", disposeListeners.bind(this));
+            this.on("observer", tryResolve);
+            this.on("listen", tryResolve);
             tryResolve();
-        })
+        });
     }
 }
 
@@ -175,7 +186,7 @@ export class LogPipe {
         async function becomeDispatchable(this: LogPipe) {
             if (this.realtimeAbly.connection.state !== "connected")
                 await this.realtimeAbly.connection.once("connected");
-            await this.notifier.onFulfilled();
+            await this.notifier.onFulfilled(signal);
         }
 
         await Promise.race([becomeDispatchable.call(this), aborter]);
