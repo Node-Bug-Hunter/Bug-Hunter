@@ -197,7 +197,7 @@ export class LogPipe {
         const compressedStr = compress(transport, 15);
         const msgId = createHash('md5').update(transport).digest('hex');
         const sendable = (compressedStr.length > transport.length) ? transport : compressedStr;
-        let chunksLen = Number.parseInt(`${sendable.length / LIMIT}`);
+        let chunksLen = Math.trunc(sendable.length / LIMIT);
         if (sendable.length % LIMIT > 0) chunksLen++;
 
         while (true) {
@@ -213,7 +213,7 @@ export class LogPipe {
                     const tobeId = i + 1;
 
                     await Promise.race([this.realtimeChannel.publish("logs", {
-                        final: tobeId >= LIMIT,
+                        final: tobeId >= chunksLen,
                         chunkId: msgId,
                         part: tobeId,
                         chunk
@@ -221,8 +221,8 @@ export class LogPipe {
 
                     chunksSent++;
                 }
-                
-                if (chunksSent >= LIMIT) return;
+
+                if (chunksSent >= chunksLen) return;
             }
             catch (e) {
                 if (e instanceof ErrorInfo) {
