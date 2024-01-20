@@ -1,6 +1,7 @@
 import { HunterConfig, HunterLogConfig, MachineData, RequestPayload } from "./types";
 import { getCodeContext, getSetIdConfig, parseStack } from "./utility";
 import { SKIP_STRING } from "./config.json";
+import { Transceiver } from "./transceiver";
 import EventEmitter = require("events");
 import { LogPipe } from "./logpipe";
 import { writeLog } from "./logger";
@@ -60,8 +61,11 @@ export class Hunter extends EventEmitter {
     startHunting(): boolean {
         if (Hunter.working) return false;
 
-        if (this.config.enableRemoteMonitoring)
-            this.logPiper = new LogPipe(this.config.apiKey, this.machineData);
+        if (this.config.enableRemoteMonitoring) {
+            const tsvr = new Transceiver(this.config.apiKey, this.machineData);
+            this.logPiper = new LogPipe(tsvr);
+        }
+
         process.on("unhandledRejection", this.urHandler);
         process.on("uncaughtException", this.ueHandler);
         Hunter.working = true; // Set the flag

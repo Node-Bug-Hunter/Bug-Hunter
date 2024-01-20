@@ -68,10 +68,20 @@
             min-width: 260px;
             max-width: 412px;
             padding: 8px 10px;
-            text-wrap: balance;
+            width: fit-content;
             border-radius: 10px;
             font-family: monospace;
             background-color: #0000005c;
+        }
+
+        .body td > .anti-phish .detail {
+            background-color: #a2ff00cf;
+            color: #1d4700;
+        }
+
+        .body td > .anti-phish .detail .warn {
+            text-wrap: balance;
+            font-size: 12px;
         }
 
         .detail > p {
@@ -116,8 +126,14 @@
                 <img src="|LOGO_URL|" alt="BUG HUNTER">
                 <div class="sub">Bugs beware, Code's in care!</div>
             </div>
+            <div class="anti-phish">
+                <div class="detail">
+                    <b>|ANTI_PHISHING_PHRASE|</b>
+                    <div class="warn">|ANTI_PHISHING_WARNING|</div>
+                </div>
+            </div>
             <div>
-                <div class="disp">Welcome |GREETINGS|,<hr></div> <!-- "Abroad" | "Back" -->
+                <div class="disp">Welcome |GREETINGS|,<hr></div>
                 <div class="detail table">
                     <p>Use the verification code provided below to verify your <b>Bug-Hunter</b> controller account.</p>
                     <div class="otp">|PASSCODE|</div>

@@ -64,13 +64,24 @@
         }
 
         .detail {
-            margin: 2px 5px;
+            margin: auto;
             min-width: 260px;
             max-width: 720px;
             padding: 8px 10px;
+            width: fit-content;
             border-radius: 10px;
             font-family: monospace;
             background-color: #0000005c;
+        }
+
+        .body td > .anti-phish .detail {
+            background-color: #a2ff00cf;
+            color: #1d4700;
+        }
+
+        .body td > .anti-phish .detail .warn {
+            text-wrap: balance;
+            font-size: 12px;
         }
 
         .spc .k { padding-right: 5px; text-align: left; margin-right: auto; }
@@ -131,6 +142,12 @@
             <div class="head">
                 <img src="|LOGO_URL|" alt="BUG HUNTER">
                 <div class="sub">Bugs beware, Code's in care!</div>
+            </div>
+            <div class="anti-phish">
+                <div class="detail">
+                    <b>|ANTI_PHISHING_PHRASE|</b>
+                    <div class="warn">|ANTI_PHISHING_WARNING|</div>
+                </div>
             </div>
             <div class="meta">
                 <div class="disp">We've Hunted A <b>BUG</b> For You<hr></div>

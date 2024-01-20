@@ -1,6 +1,6 @@
 import { JSON_Stringify, parseStack, wait } from "./utility";
-import { MSGEvent, MachineData, Stack } from "./types";
-import { Realtime, Types } from "ably/promises";
+import { LogMSGEvent, Stack } from "./types";
+import { Transceiver } from "./transceiver";
 import { SKIP_STRING } from "./config.json";
 import EventEmitter = require("events");
 import { compress } from "./packer";
@@ -8,8 +8,8 @@ import { createHash } from "crypto";
 import { ErrorInfo } from "ably";
 
 const maxLogCount = 10;
-const feedbackMSGS = ["monitor-start", "monitor-stop"];
 type Level = "LOG" | "INFO" | "TABLE" | "WARN" | "ERROR";
+const feedbackMSGS = ["logs-monitor-pause", "logs-monitor-resume"];
 
 type Log = {
     logValue: any;
@@ -62,50 +62,31 @@ class Notifier extends EventEmitter {
 
 export class LogPipe {
     private disposed = false;
-    private identifier: string;
     private queueActive = false;
-    private machineData: MachineData;
+    private transceiver: Transceiver;
     private notifier = new Notifier();
-    private realtimeAbly: Types.RealtimePromise;
-    private realtimeChannel: Types.RealtimeChannelPromise;
     private logsQueue: [Function, LogObject, AbortController][] = [];
 
-    constructor(key: string, _md: MachineData) {
+    constructor(_tscv: Transceiver) {
         const log = console.log, info = console.info, warn = console.warn, table = console.table, error = console.error;
         const fnMaps: [Level, Function][] = [["LOG", log], ["INFO", info],
             ["WARN", warn], ["TABLE", table], ["ERROR", error]];
         for (const fnMap of fnMaps) this.applyToConsole(fnMap);
 
-        this.machineData = _md;
-        this.identifier = `package|${_md.id}`;
-        this.realtimeAbly = new Realtime.Promise({ key, clientId: this.identifier });
-
-        this.realtimeAbly.connection.once("connected").then(() => {
-            this.realtimeChannel = this.realtimeAbly.channels.get(_md.id);
-            this.realtimeChannel.subscribe(this.handleMessages.bind(this));
-            this.realtimeChannel.presence.enter("package");
-            
-            this.realtimeChannel.presence.subscribe((pm) => {
-                const isActive = pm.action === "enter" || pm.action === "present" || pm.action === "update";
-                if (pm.clientId.startsWith("web|") && pm.clientId.split("|")[1] === _md.id) this.notifier.setObserverState(isActive);
-            });
-        });
+        this.transceiver = _tscv;
+        this.transceiver.on("msg", (name, data) => this.handleMessages(name, data));
+        this.transceiver.on("state", (active) => this.notifier.setObserverState(active));
     }
 
     async dispose() {
         if (this.disposed) return;
         this.disposed = true;
-        
-        for (const [,, controller]
-            of this.logsQueue) controller.abort();
-        
+
+        for (const [,, controller] of this.logsQueue)
+            controller.abort(); // Interrupt queued logs
+
         this.logsQueue.length = 0;
         this.queueActive = false;
-        this.realtimeAbly.close();
-
-        await this.realtimeAbly
-            .connection.once("closed");
-        this.realtimeAbly = null;
     }
 
     private applyToConsole(map: [Level, Function]) {
@@ -123,6 +104,7 @@ export class LogPipe {
 
             map[1].apply(console, args);
             if (instance.disposed) return;
+
             const { stack } = new Error();
             const loggedData = args.map(createLogPiece);
             const callStack = parseStack(stack, true);
@@ -145,18 +127,16 @@ export class LogPipe {
         }
     }
 
-    private async handleMessages(msg: Types.Message) {
-        const { data, name } = msg;
-
-        switch (name as MSGEvent) {
-            case "monitor-start": this.notifier.setListenState(true); break;
-            case "monitor-stop": this.notifier.setListenState(false); break;
+    private async handleMessages(name: string, data: any) {
+        switch (name as LogMSGEvent) {
+            case "logs-monitor-resume": this.notifier.setListenState(true); break;
+            case "logs-monitor-pause": this.notifier.setListenState(false); break;
 
             default: break;
         }
 
-        if (feedbackMSGS.includes(msg.name))
-            await this.realtimeChannel?.publish("feedback", data);
+        if (feedbackMSGS.includes(name))
+            await this.transceiver?.pub("feedback", data);
     }
 
     private async runDispatcher() {
@@ -184,8 +164,7 @@ export class LogPipe {
         const aborter = new Promise((_, reject) => signal.addEventListener("abort", () => reject()));
         
         async function becomeDispatchable(this: LogPipe) {
-            if (this.realtimeAbly.connection.state !== "connected")
-                await this.realtimeAbly.connection.once("connected");
+            await this.transceiver.ensureConnected();
             await this.notifier.onFulfilled(signal);
         }
 
@@ -203,8 +182,8 @@ export class LogPipe {
         while (true) {
             try {
                 if (sendable.length < LIMIT) {
-                    await Promise.race([this.realtimeChannel
-                        .publish("logs", compressedStr), aborter]);
+                    await Promise.race([this.transceiver
+                        .pub("logs", compressedStr), aborter]);
                     return;
                 }
                 
@@ -212,7 +191,7 @@ export class LogPipe {
                     const chunk = sendable.slice(i * LIMIT, (i + 1) * LIMIT);
                     const tobeId = i + 1;
 
-                    await Promise.race([this.realtimeChannel.publish("logs", {
+                    await Promise.race([this.transceiver.pub("logs", {
                         final: tobeId >= chunksLen,
                         chunkId: msgId,
                         part: tobeId,

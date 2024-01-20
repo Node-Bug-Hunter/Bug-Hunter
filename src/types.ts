@@ -1,5 +1,3 @@
-type Address = { name: string, email: string };
-
 // #region Hunter Configuration Typings
 
 /**
@@ -94,4 +92,4 @@ export type RequestPayload = {
 */
 export type LoggableData = Omit<ExceptionTemplate, "app"> & { config: HunterLogConfig }
 
-export type MSGEvent = "monitor-start" | "monitor-stop";
+export type LogMSGEvent = "logs-monitor-pause" | "logs-monitor-resume";
