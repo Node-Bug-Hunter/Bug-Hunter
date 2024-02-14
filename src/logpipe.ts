@@ -14,7 +14,7 @@ const feedbackMSGS = ["logs-monitor-pause", "logs-monitor-resume"];
 type Log = {
     logValue: any;
     type: string;
-}
+};
 
 type LogObject = {
     timeStamp: number;
@@ -28,6 +28,10 @@ class Notifier extends EventEmitter {
     private isReadyToListen = false;
 
     constructor() { super(); }
+
+    getListenState() {
+        return this.isReadyToListen;
+    }
 
     setListenState(state: boolean) {
         this.isReadyToListen = state;
@@ -72,10 +76,19 @@ export class LogPipe {
         const fnMaps: [Level, Function][] = [["LOG", log], ["INFO", info],
             ["WARN", warn], ["TABLE", table], ["ERROR", error]];
         for (const fnMap of fnMaps) this.applyToConsole(fnMap);
-
         this.transceiver = _tscv;
-        this.transceiver.on("msg", (name, data) => this.handleMessages(name, data));
-        this.transceiver.on("state", (active) => this.notifier.setObserverState(active));
+
+        this.transceiver.on("msg", (name, data) => {
+            this.handleMessages(name, data);
+        });
+
+        this.transceiver.on("state", (active) => {
+            this.notifier.setObserverState(active);
+
+            if (active) this.transceiver.pub("logs-listen-state", {
+                paused: !this.notifier.getListenState()
+            });
+        });
     }
 
     async dispose() {

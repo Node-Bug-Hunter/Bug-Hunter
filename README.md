@@ -49,7 +49,9 @@ Bug-Hunter is a robust error reporting & cluster monitoring solution tailored fo
 - [x] ~Add HTML/Text type email sending logic with templates.~
 - [x] ~Add feature to implement logging functionality.~
 - [x] ~Add feature for magic-link email verification.~
-- [ ] Integrate Realtime monitoring dashboard.
+- [x] ~Integrate Realtime monitoring dashboard.~
+- [ ] Add system helth monitoring feature.
+- [ ] Implement Custom metrics & actions.
 
 ## Bug Hunter VS pm2 Plus Monitoring Service
 
@@ -60,7 +62,7 @@ Bug-Hunter is a robust error reporting & cluster monitoring solution tailored fo
 | Error Tracking                 | ✔️                           | ✔️                         |
 | Code Context                   | ✔️                           | ✔️                         |
 | Open Source                    | ✔️ (Full)                    | ✔️ (Partial)               |
-| Realtime Monitoring Dashboard  | ❌ (Coming soon...)          | ✔️                         |
+| Realtime Monitoring Dashboard  | ✔️                           | ✔️                         |
 | Reporting Options              | Email & Log                  | Real-time Dashboard         |
 | Flexibility                    | High                         | Moderate                    |
 | Data Handling                  | Automatic                    | Real-time Monitoring        |
